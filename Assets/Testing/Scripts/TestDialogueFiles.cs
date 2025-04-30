@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DIALOGUE;
+using System.Data;
 
 public class TestDialogues : MonoBehaviour
 {
@@ -15,19 +16,19 @@ public class TestDialogues : MonoBehaviour
     void StartConversation()
     {
         List<string> lines = FileManager.ReadTextAsset(fileToRead);
+        
         foreach(string line in lines)
         {
-            if (string.IsNullOrEmpty(line))
+            if(string.IsNullOrWhiteSpace(line))
             {
                 continue;
             }
-            Debug.Log($"Segmenting line '{line}");
-            DIALOGUE_LINE dlLine = DialogueParser.Parse(line);
+            DIALOGUE_LINE dl = DialogueParser.Parse(line);
 
-            int i = 0;
-            foreach(DL_DIALOGUE_DATA.DIALOGUE_SEGMENT segment in dlLine.dialogue.segments)
+            for(int i = 0; i < dl.commandData. commands.Count; i++)
             {
-                Debug.Log($"Segment[{i++}] = '{segment.dialogue}' [signal=={segment.startSignal.ToString()}{(segment.signalDelay > 0 ? $" {segment.signalDelay}" : $"")}]");
+                DL_COMMAND_DATA.Command command = dl.commandData.commands[i];
+                Debug.Log($"Command [{i}] '{command.name}' has arguments [{string.Join(", ", command.arguments)}]");
             }
         }
         //DialogueSystem.instance.Say(lines);

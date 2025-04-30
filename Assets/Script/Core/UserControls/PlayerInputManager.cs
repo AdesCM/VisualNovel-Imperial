@@ -19,8 +19,6 @@ namespace DIALOGUE
             {
                 PromptAdvance();
             }
-
-
         }
 
         public void PromptAdvance()

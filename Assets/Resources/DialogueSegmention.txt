@@ -1,0 +1,10 @@
+
+
+
+Valius "For the Emperor" playSong("Proud Astartes"d -v 0.75 -p 1), setMood(Grave)
+
+Scipus "You have honor. Brothers" playVoice("e_d1_v" -v 1.5), setBackground(Room1 - "Diagonal Lines" -s 3.5)
+
+setAccomplishment("A legendary Bolter" true), setCLI(Elen 0:Angel 1:Intrigued -s 2.3 -l true)
+
+showScene(false),StopMusic(all -s 1.5)

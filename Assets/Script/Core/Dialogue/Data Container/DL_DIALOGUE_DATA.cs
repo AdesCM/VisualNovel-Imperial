@@ -7,9 +7,8 @@ using Unity.VisualScripting;
 public class DL_DIALOGUE_DATA
 {
     public List<DIALOGUE_SEGMENT> segments;
-    private const string segmentsIdentifierPattern = @"\{[ca]}|\{w[ca]\s\d*\.?\d*\}";
+    private const string segmentsIdentifierPattern = @"\{[ca]\}|\{w[ca]\s\d*\.?\d*\}";
     
-    public bool hasDialogue=> segments.Count > 0;
     public DL_DIALOGUE_DATA(string rawDialogue)
     {
         segments = RipSegments(rawDialogue);
@@ -36,6 +35,7 @@ public class DL_DIALOGUE_DATA
         {
             lastIndex = matches[0].Index;
         }
+
         for (int i = 0; i < matches.Count; i++)
         {
             Match match = matches[i];
@@ -54,7 +54,7 @@ public class DL_DIALOGUE_DATA
                 float.TryParse(signalSplit[1], out segment.signalDelay);
             }
 
-            int nextIndex = i + 1 < matches.Count ? matches[i+1].Index : rawDialogue.Length;
+            int nextIndex = i + 1 < matches.Count ? matches[i + 1].Index : rawDialogue.Length;
             segment.dialogue = rawDialogue.Substring(lastIndex + match.Length, nextIndex - (lastIndex + match.Length));
             lastIndex = nextIndex;
 

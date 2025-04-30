@@ -71,10 +71,10 @@ namespace DIALOGUE
         {
             // 캐릭터 이름을 보여줄지 말지 결정하는 곳.
             if (line.hasSpeaker)
-                dialogueSystem.ShowSpeakerName(line.speaker);
+                dialogueSystem.ShowSpeakerName(line.speakerData.displayname);
                 
             //이제 대화를 띄워보자.
-            yield return BuildLineSegments(line.dialogue);
+            yield return BuildLineSegments(line.dialogueData);
 
             //유저 인풋을 대기해야함.
             yield return WaitForUserInput();
@@ -84,7 +84,7 @@ namespace DIALOGUE
 
         IEnumerator Line_RunCommands(DIALOGUE_LINE line)
         {
-            Debug.Log(line.commands);
+            Debug.Log(line.commandData);
             yield return null;
         }
 
@@ -116,9 +116,6 @@ namespace DIALOGUE
 
                 default:
                     break;
-
-
-
             }
         }
 
@@ -133,7 +130,6 @@ namespace DIALOGUE
             {
                 architect.Append(dialogue);
             }
-            architect.Build(dialogue);
 
             while (architect.isBuilding)
             {
