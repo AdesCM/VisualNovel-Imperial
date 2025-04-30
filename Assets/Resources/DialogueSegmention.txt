@@ -1,5 +1,8 @@
 
 
+print_1p("This is a command running staright from our dialogue file!")
+
+Leandrus "Move Left and then Right." print_1p("start moving"), [wait]moveCharDemo(left), [wait]moveCharDemo(right), print_1p("Done") 
 
 Valius "For the Emperor" playSong("Proud Astartes"d -v 0.75 -p 1), setMood(Grave)
 

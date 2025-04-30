@@ -60,8 +60,13 @@ namespace DIALOGUE
                 if (line.hasDialogue)
                     yield return Line_RunDialogue(line);
 
+                // 검사 시 이게 커맨드라면?
                 if (line.hasCommands)
                     yield return Line_RunCommands(line);
+
+                if (line.hasDialogue)
+                    //유저 인풋을 대기해야함.
+                    yield return WaitForUserInput();
             }
         }
 
@@ -76,15 +81,21 @@ namespace DIALOGUE
             //이제 대화를 띄워보자.
             yield return BuildLineSegments(line.dialogueData);
 
-            //유저 인풋을 대기해야함.
-            yield return WaitForUserInput();
         }
 
 
 
         IEnumerator Line_RunCommands(DIALOGUE_LINE line)
         {
-            Debug.Log(line.commandData);
+            List<DL_COMMAND_DATA.Command> commands = line.commandData.commands;
+
+            foreach(DL_COMMAND_DATA.Command command in commands)
+            {
+                if(command.waitForCompletion)
+                    yield return CommandManager.instance.Execute(command.name, command.arguments);
+                else
+                    CommandManager.instance.Execute(command.name, command.arguments);
+            }
             yield return null;
         }
 
