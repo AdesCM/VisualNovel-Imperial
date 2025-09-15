@@ -1,9 +1,7 @@
-public enum GamePhase
-{
-    TurnStart,
-    CardReveal,
-    PreCombat,
-    DuringCombat,
-    PostCombat,
-    TurnEnd
-}
+public enum GamePhase 
+{ TurnStart, 
+CardReveal, 
+PreCombat, 
+DuringCombat, 
+PostCombat, 
+TurnEnd }

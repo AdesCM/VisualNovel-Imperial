@@ -6,7 +6,6 @@ public static class EffectFactory
     public static CardEffect CreateEffect(string effectId, Dictionary<string, object> parameters)
     {
         CardEffect effect = null;
-
         switch (effectId)
         {
             case "DealDamage": effect = new DamageEffect(); break;
@@ -15,7 +14,6 @@ public static class EffectFactory
             case "CombatBonus": effect = new CombatBonusEffect(); break;
             default: Debug.LogError($"Unknown effectId: {effectId}"); break;
         }
-
         effect?.Initialize(parameters);
         return effect;
     }

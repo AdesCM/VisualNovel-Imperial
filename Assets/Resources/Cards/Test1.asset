@@ -12,10 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf72825348c4b1d47aa35fb201be0dd4, type: 3}
   m_Name: Test1
   m_EditorClassIdentifier: 
-  cardId: 1
-  cardName: "\uD14C\uC2A4\uD2B81"
-  description: 
-  attackPower: 5
-  speed: 1
+  cardId: 
   cardArt: {fileID: 21300000, guid: 5e8e7390e70a0ff4ab1d05b5f87816dd, type: 3}
-  effects: []
+  speed: 1
+  awakenedState:
+    stateName: "\uBC1C\uC545"
+    attackDice: 3+1d4
+    effects: []
+  corruptedState:
+    stateName: "\uBC1C\uC545"
+    attackDice: 3+1d4
+    effects: []
+  ascendedState:
+    stateName: "\uBC1C\uC545"
+    attackDice: 3+1d4
+    effects: []
+  abyssalState:
+    stateName: "\uBC1C\uC545"
+    attackDice: 3+1d4
+    effects: []
