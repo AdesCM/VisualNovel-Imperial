@@ -1,5 +1,7 @@
 public enum SlotState 
-{ Awakened, 
-Corrupted, 
-Ascended, 
-Abyssal }
+{ 
+    Awakened,
+    Revelation,   // Corrupted -> Revelation
+    Encroachment, // Ascended -> Encroachment
+    Corrosion     // Abyssal -> Corrosion
+}

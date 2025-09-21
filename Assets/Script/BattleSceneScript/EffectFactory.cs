@@ -11,13 +11,11 @@ public static class EffectFactory
             case "DealDamage": effect = new DamageEffect(); break;
             case "HealSelf": effect = new HealEffect(); break;
             case "ExpandSlots": effect = new ExpandSlotsEffect(); break;
-            case "CombatBonus": effect = new CombatBonusEffect(); break;
             case "ModifyResistance": effect = new ModifyResistanceEffect(); break;
+            case "BuffNextTurnSlot": effect = new BuffNextTurnSlotEffect(); break;
             default: Debug.LogError($"Unknown effectId: {effectId}"); break;
         }
         effect?.Initialize(parameters);
         return effect;
     }
 }
-
-

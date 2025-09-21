@@ -1,20 +1,18 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-// ★★★ Inspector에서 편집 가능한 Key-Value 클래스 새로 정의 ★★★
 [System.Serializable]
 public class EffectParameter
 {
     public string key;
-    public string value; // 값을 문자열로 받아 코드에서 변환 (가장 유연한 방식)
+    public string value;
 }
 
 [System.Serializable]
 public class EffectData
 {
     public string effectId;
-    // ★★★ Dictionary 대신 위에서 만든 클래스의 List를 사용 ★★★
-    public List<EffectParameter> parameters; 
+    public List<EffectParameter> parameters;
 }
 
 [System.Serializable]
@@ -34,10 +32,10 @@ public class CardDataSO : ScriptableObject
     public int speed;
     
     public CardStateData awakenedState;
-    public CardStateData corruptedState;
-    public CardStateData ascendedState;
-    public CardStateData abyssalState;
+    public CardStateData revelationState;   // corruptedState -> revelationState
+    public CardStateData encroachmentState; // ascendedState -> encroachmentState
+    public CardStateData corrosionState;    // abyssalState -> corrosionState
 
-    public bool HasAscendedState => ascendedState != null && !string.IsNullOrEmpty(ascendedState.stateName);
-    public bool HasAbyssalState => abyssalState != null && !string.IsNullOrEmpty(abyssalState.stateName);
+    public bool HasEncroachmentState => encroachmentState != null && !string.IsNullOrEmpty(encroachmentState.stateName);
+    public bool HasCorrosionState => corrosionState != null && !string.IsNullOrEmpty(corrosionState.stateName);
 }

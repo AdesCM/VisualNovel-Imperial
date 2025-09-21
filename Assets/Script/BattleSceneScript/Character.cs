@@ -3,47 +3,28 @@ using UnityEngine;
 public class Character
 {
     public string characterName;
-
-    // 능력치
-    public int level;
+    public int level = 1;
     public int maxHealth;
     public int currentHp;
     public int attackPower;
     public int defense;
-    public float critRate;
-    public float critMultiplier;
-    
-    // 속성 내성
-    public float baseResistanceSlash = 1.0f;
-    public float baseResistancePierce = 1.0f;
-    public float baseResistanceBlunt = 1.0f;
-
-    // 경험치
-    public int experience;
+    public float critRate = 0.1f;
+    public float critMultiplier = 1.5f;
+    public float resistanceSlash = 1.0f;
+    public float resistancePierce = 1.0f;
+    public float resistanceBlunt = 1.0f;
+    public int experience = 0;
     public int maxExperience;
-    public int sanity;
-
-    // 보너스 내성
-    public float bonusResistanceSlash = 0f;
-    public float bonusResistancePierce = 0f;
-    public float bonusResistanceBlunt = 0f;
+    public int sanity = 0;
 
     public Character(string name, int hp, int atk, int def, int initialSanity = 0)
     {
         characterName = name;
-        level = 1;
         maxHealth = hp;
         currentHp = hp;
         attackPower = atk;
         defense = def;
-        critRate = 0.1f;
-        critMultiplier = 1.5f;
-        baseResistanceSlash = 1.0f;
-        baseResistancePierce = 1.0f;
-        baseResistanceBlunt = 1.0f;
-        experience = 0;
         sanity = initialSanity;
-        
         CalculateMaxExperience();
     }
 
@@ -60,7 +41,7 @@ public class Character
         currentHp = Mathf.Clamp(currentHp, 0, maxHealth);
         Debug.Log($"{characterName}이(가) {amount}만큼 회복! [HP: {currentHp}/{maxHealth}]");
     }
-
+    
     public void ChangeSanity(int amount)
     {
         sanity += amount;
@@ -81,13 +62,11 @@ public class Character
     {
         experience -= maxExperience;
         level++;
-        
         // [차후 수정] 레벨업 시 능력치 증가 공식
         maxHealth += 10;
         attackPower += 2;
         defense += 1;
         currentHp = maxHealth;
-
         CalculateMaxExperience();
         Debug.Log($"{characterName} 레벨 업! Level: {level}");
     }
@@ -98,17 +77,14 @@ public class Character
         maxExperience = 100 * level;
     }
 
-     public float GetResistanceFor(AttackType attackType)
+    public float GetResistanceFor(AttackType attackType)
     {
         switch (attackType)
         {
-            // (기본 내성 + 보너스 내성)을 합산하여 최종 값을 반환
-            case AttackType.Slash: return baseResistanceSlash + bonusResistanceSlash;
-            case AttackType.Pierce: return baseResistancePierce + bonusResistancePierce;
-            case AttackType.Blunt: return baseResistanceBlunt + bonusResistanceBlunt;
+            case AttackType.Slash: return resistanceSlash;
+            case AttackType.Pierce: return resistancePierce;
+            case AttackType.Blunt: return resistanceBlunt;
             default: return 1.0f;
         }
     }
-
-    
 }
