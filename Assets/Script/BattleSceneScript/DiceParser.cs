@@ -7,10 +7,10 @@ public static class DiceParser
     {
         if (string.IsNullOrEmpty(diceNotation)) return 0;
 
-        // "10 + 2d6" 처럼 공백이 있어도 처리할 수 있도록 공백을 모두 제거합니다.
+        // "10 + 2d6" <- 이런 거 예상해서 공백처리
         string notation = diceNotation.Replace(" ", "");
 
-        // ★★★ 1. 덧셈(+) 형식 확인 ★★★
+        // +다이스 처리
         if (notation.Contains("+"))
         {
             string[] parts = notation.Split('+');
@@ -19,7 +19,7 @@ public static class DiceParser
             int diceResult = Roll(parts[1]); 
             return baseValue + diceResult;
         }
-        // ★★★ 2. 뺄셈(-) 형식 확인 ★★★
+        // -다이스 처리
         else if (notation.Contains("-"))
         {
             string[] parts = notation.Split('-');
@@ -28,7 +28,7 @@ public static class DiceParser
             return baseValue - diceResult;
         }
 
-        // ★★★ 3. 기존 로직 (순수 주사위 또는 고정 값) ★★★
+        // 순수 주사위값 존재시(재귀로 설계)
         Match match = Regex.Match(notation.ToLower(), @"(\d+)d(\d+)");
         if (match.Success)
         {
