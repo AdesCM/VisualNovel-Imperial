@@ -13,6 +13,7 @@ public static class EffectFactory
             case "ExpandSlots": effect = new ExpandSlotsEffect(); break;
             case "ModifyResistance": effect = new ModifyResistanceEffect(); break;
             case "BuffNextTurnSlot": effect = new BuffNextTurnSlotEffect(); break;
+            case "ModifySanity": effect = new ModifySanityEffect(); break;
             default: Debug.LogError($"Unknown effectId: {effectId}"); break;
         }
         effect?.Initialize(parameters);

@@ -94,3 +94,30 @@ public class BuffNextTurnSlotEffect : CardEffect
         Debug.Log($"{ownerPlayer.playerName}의 다음 턴 {targetSlotIndex + 1}번 슬롯의 주사위 굴림 횟수가 {diceCountBonus}만큼 증가합니다!");
     }
 }
+
+public class ModifySanityEffect : CardEffect
+{
+    // 이 효과는 즉시 발동하는 경우가 많으므로 PreCombat 페이즈가 적합합니다.
+    public override GamePhase TriggerPhase => GamePhase.PreCombat;
+    
+    private string target; // "Self" 또는 "Opponent"
+    private int amount;    // 변경할 수치 (예: -2, 5)
+
+    public override void Initialize(Dictionary<string, object> parameters)
+    {
+        target = parameters["target"].ToString();
+        amount = System.Convert.ToInt32(parameters["amount"]);
+    }
+
+    public override void Execute(Player ownerPlayer, Player opponentPlayer, Character ownerUser, Character opponentUser)
+    {
+        if (target.Equals("Self", System.StringComparison.OrdinalIgnoreCase))
+        {
+            if (ownerUser != null) ownerUser.ChangeSanity(amount);
+        }
+        else if (target.Equals("Opponent", System.StringComparison.OrdinalIgnoreCase))
+        {
+            if (opponentUser != null) opponentUser.ChangeSanity(amount);
+        }
+    }
+}

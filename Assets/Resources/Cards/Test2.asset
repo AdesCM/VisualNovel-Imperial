@@ -20,18 +20,18 @@ MonoBehaviour:
     attackDice: 3+1d5
     attackType: 0
     effects: []
-  corruptedState:
+  revelationState:
     stateName: "\uCC22\uAE30"
-    attackDice: 7-1d4
+    attackDice: 8-1d5
     attackType: 0
     effects: []
-  ascendedState:
+  encroachmentState:
     stateName: "\uCC9C\uC0C1\uC758\uAC80"
-    attackDice: 1+3d3
+    attackDice: 1+3d5
     attackType: 0
     effects: []
-  abyssalState:
-    stateName: "\uC545\uB9C8\uC758\uAC80"
-    attackDice: 19-2d5
+  corrosionState:
+    stateName: "\uC800\uC8FC\uC758\uCE7C\uB0A0"
+    attackDice: 21-2d6
     attackType: 0
     effects: []
