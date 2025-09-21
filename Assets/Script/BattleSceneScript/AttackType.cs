@@ -1,0 +1,1 @@
+public enum AttackType { Slash, Pierce, Blunt } // 참, 관, 충

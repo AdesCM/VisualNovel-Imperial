@@ -29,7 +29,6 @@ public static class DiceParser
         }
 
         // ★★★ 3. 기존 로직 (순수 주사위 또는 고정 값) ★★★
-        // "+"나 "-"가 없다면, 기존 방식대로 처리합니다.
         Match match = Regex.Match(notation.ToLower(), @"(\d+)d(\d+)");
         if (match.Success)
         {
