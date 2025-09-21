@@ -56,14 +56,19 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         // --- 테스트 시나리오 설정 ---
-        player1.characters.Add(new Character("검사", 100, 15, 10, 15));
-        player2.characters.Add(new Character("마법사", 80, 20, 5, -15));
+        player1.characters.Add(new Character("검사", 100, 12, 10, 0));
+        player2.characters.Add(new Character("마법사", 80, 15, 5, 0));//name, hp, atk, def, initialSanity
+
         player1.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c001"], user = player1.characters[0] });
         player1.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c002"], user = player1.characters[0] });
         player1.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c001"], user = player1.characters[0] });
+        player1.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c002"], user = player1.characters[0] });
+
         player2.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c002"], user = player2.characters[0] });
         player2.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c001"], user = player2.characters[0] });
         player2.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c002"], user = player2.characters[0] });
+        player2.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c001"], user = player2.characters[0] });
+
 
         StartCoroutine(BattleRoutine());
     }
@@ -147,7 +152,7 @@ public class GameManager : MonoBehaviour
         foreach (var slot in player1.registeredSlots) DetermineSlotState(slot);
         foreach (var slot in player2.registeredSlots) DetermineSlotState(slot);
     }
-
+    //카드 슬롯 결정
     void DetermineSlotState(RegisteredCardSlot slot)
     {
         if (slot.user == null) return; // 더미 카드 등 사용자가 없는 경우
@@ -201,7 +206,7 @@ public class GameManager : MonoBehaviour
             loserSlot = slot1;  loserView = view1;
             Debug.Log($"우위 경쟁 승자: {winnerSlot.user.characterName}");
         }
-        // ★★★ 추가된 조건: 값이 동일할 경우 ★★★
+        // 조건: 값이 동일할 경우
         else
         {
             Debug.Log("우위 경쟁 무승부! 이번 라운드의 전투는 무효 처리됩니다.");
@@ -212,7 +217,7 @@ public class GameManager : MonoBehaviour
         if (winnerSlot != null)
         {
             // 4. 공격권을 지닌 사람이 '새로' 피해를 계산
-            Debug.Log($"--- {winnerSlot.user.characterName}의 공격 턴 ---");
+            Debug.Log($"--- {winnerSlot.user.characterName}의 공격 ---");
             int finalDamage = CalculateFinalDamage(winnerSlot, loserSlot);
 
             // 5. 패자에게 계산된 만큼 피해를 줌
@@ -232,6 +237,7 @@ public class GameManager : MonoBehaviour
     yield return StartCoroutine(ProcessRoundPhase(GamePhase.PostCombat, slot1, slot2));
 }
 
+    // 데미지 계산 모듈
     private int CalculateFinalDamage(RegisteredCardSlot attackerSlot, RegisteredCardSlot defenderSlot)
     {
         Character attacker = attackerSlot.user;
@@ -256,6 +262,7 @@ public class GameManager : MonoBehaviour
         return Mathf.Max(1, Mathf.FloorToInt(finalDamage));
     }
 
+    // 효과 수집 모듈
     IEnumerator ProcessRoundPhase(GamePhase phase, RegisteredCardSlot slot1, RegisteredCardSlot slot2)
     {
         var effectsToProcess = new List<EffectToSort>();
@@ -319,32 +326,6 @@ public class GameManager : MonoBehaviour
         });
     }
 
-    private int CalculateCombatBonus(Player owner, Player opponent, RegisteredCardSlot ownerSlot, RegisteredCardSlot opponentSlot)
-    {
-        int totalBonus = 0;
-        CardStateData ownerStateData = GetStateData(ownerSlot);
-        if (ownerStateData == null || ownerStateData.effects == null) return 0;
-
-        foreach (var effectData in ownerStateData.effects)
-        {
-            var paramsDict = new Dictionary<string, object>();
-            if (effectData.parameters != null)
-            {
-                foreach (var param in effectData.parameters)
-                {
-                    if (int.TryParse(param.value, out int intValue)) { paramsDict.Add(param.key, intValue); }
-                    else { paramsDict.Add(param.key, param.value); }
-                }
-            }
-            
-            CardEffect tempEffect = EffectFactory.CreateEffect(effectData.effectId, paramsDict);
-            if (tempEffect != null)
-            {
-                totalBonus += tempEffect.GetCombatBonus(ownerSlot, opponentSlot);
-            }
-        }
-        return totalBonus;
-    }
 
     CardStateData GetStateData(RegisteredCardSlot slot)
     {

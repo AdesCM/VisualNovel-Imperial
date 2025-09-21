@@ -14,16 +14,19 @@ public class Character
     public float critMultiplier;
     
     // 속성 내성
-    public float resistanceSlash;
-    public float resistancePierce;
-    public float resistanceBlunt;
+    public float baseResistanceSlash = 1.0f;
+    public float baseResistancePierce = 1.0f;
+    public float baseResistanceBlunt = 1.0f;
 
     // 경험치
     public int experience;
     public int maxExperience;
-
-    // ★★★ 누락되었던 정신력 변수 ★★★
     public int sanity;
+
+    // 보너스 내성
+    public float bonusResistanceSlash = 0f;
+    public float bonusResistancePierce = 0f;
+    public float bonusResistanceBlunt = 0f;
 
     public Character(string name, int hp, int atk, int def, int initialSanity = 0)
     {
@@ -35,12 +38,10 @@ public class Character
         defense = def;
         critRate = 0.1f;
         critMultiplier = 1.5f;
-        resistanceSlash = 1.0f;
-        resistancePierce = 1.0f;
-        resistanceBlunt = 1.0f;
+        baseResistanceSlash = 1.0f;
+        baseResistancePierce = 1.0f;
+        baseResistanceBlunt = 1.0f;
         experience = 0;
-        
-        // ★★★ 생성자에 정신력 초기화 추가 ★★★
         sanity = initialSanity;
         
         CalculateMaxExperience();
@@ -60,7 +61,6 @@ public class Character
         Debug.Log($"{characterName}이(가) {amount}만큼 회복! [HP: {currentHp}/{maxHealth}]");
     }
 
-    // ★★★ 누락되었던 정신력 변경 메소드 ★★★
     public void ChangeSanity(int amount)
     {
         sanity += amount;
@@ -98,14 +98,17 @@ public class Character
         maxExperience = 100 * level;
     }
 
-    public float GetResistanceFor(AttackType attackType)
+     public float GetResistanceFor(AttackType attackType)
     {
         switch (attackType)
         {
-            case AttackType.Slash: return resistanceSlash;
-            case AttackType.Pierce: return resistancePierce;
-            case AttackType.Blunt: return resistanceBlunt;
+            // (기본 내성 + 보너스 내성)을 합산하여 최종 값을 반환
+            case AttackType.Slash: return baseResistanceSlash + bonusResistanceSlash;
+            case AttackType.Pierce: return baseResistancePierce + bonusResistancePierce;
+            case AttackType.Blunt: return baseResistanceBlunt + bonusResistanceBlunt;
             default: return 1.0f;
         }
     }
+
+    
 }
