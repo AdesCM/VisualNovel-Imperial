@@ -17,8 +17,13 @@ public class GameManager : MonoBehaviour
     public Transform p1BattlePos;
     public Transform p2BattlePos;
 
+    // ★★★ 카드 데이터베이스와 함께 캐릭터 데이터베이스 추가 ★★★
     private Dictionary<string, CardDataSO> cardDatabase;
+    private Dictionary<string, CharacterSO> characterDatabase;
+
     private Queue<CardEffectExecution> effectQueue = new Queue<CardEffectExecution>();
+
+    private Dictionary<string, EquipmentSO> equipmentDatabase;
     private int currentMaxSlots;
 
     private struct CardEffectExecution { public CardEffect effect; public Player ownerPlayer; public Player opponentPlayer; public Character ownerUser; public Character opponentUser; }
@@ -26,29 +31,80 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
+        // 카드 데이터 로딩
         LoadAllCardsFromAssets();
+        // 캐릭터 데이터 로딩
+        LoadAllCharactersFromAssets();
+        // 장비 데이터 로딩
+        LoadAllEquipmentFromAssets();
     }
 
     void Start()
     {
-        player1.characters.Add(new Character("검사", 100, 13, 10, 0));
-        player2.characters.Add(new Character("마법사", 80, 15, 5, 0));
-        player1.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c001"], user = player1.characters[0] });
-        player2.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c002"], user = player2.characters[0] });
-        player1.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c001"], user = player1.characters[0] });
-        player2.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c002"], user = player2.characters[0] });
-        player1.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c001"], user = player1.characters[0] });
-        player2.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c002"], user = player2.characters[0] });
-        player1.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c001"], user = player1.characters[0] });
-        player2.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c002"], user = player2.characters[0] });
+        
+        // 데이터베이스에서 캐릭터 불러오기
+        CharacterSO knightSO = characterDatabase["briram_spear"];
+        CharacterSO mageSO = characterDatabase["mage_fire"];
+
+        // 실제 캐릭터(메모리 객체)를 생성합니다.
+        Character knight = new Character(knightSO, 0); // 검사 생성, 정신력 0로 시작
+        Character mage = new Character(mageSO, 0);   // 마법사 생성, 정신력 0로 시작
+
+        // 장비 불러오기
+        EquipmentSO steelSword = equipmentDatabase["sword_steel_001"];
+
+        knight.EquipItem(steelSword);
+
+        // 각 플레이어에 캐릭터 추가
+        player1.characters.Add(knight);
+        player2.characters.Add(mage);
+        
+        // user는 캐릭터 변수
+        player1.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c001"], user = knight });
+        player2.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c002"], user = mage });
+        player1.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c001"], user = knight });
+        player2.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c002"], user = mage });
+        player1.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c001"], user = knight });
+        player2.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c002"], user = mage });
+        player1.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c001"], user = knight });
+        player2.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c002"], user = mage });
+        player1.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c001"], user = knight });
+        player2.registeredSlots.Add(new RegisteredCardSlot { cardSO = cardDatabase["c002"], user = mage });
+        
         StartCoroutine(BattleRoutine());
     }
 
     private void LoadAllCardsFromAssets()
     {
         cardDatabase = new Dictionary<string, CardDataSO>();
-        var loadedCards = Resources.LoadAll<CardDataSO>("Cards");
+        var loadedCards = Resources.LoadAll<CardDataSO>("SO/Cards");
         foreach (var cardSO in loadedCards) { cardDatabase.Add(cardSO.cardId, cardSO); }
+    }
+    
+    // ★★★ 캐릭터 SO 에셋을 로드하는 새로운 함수 ★★★
+    private void LoadAllCharactersFromAssets()
+    {
+        characterDatabase = new Dictionary<string, CharacterSO>();
+        // ★★★ 경로를 "SO/Characters"로 수정 ★★★
+        var loadedCharacters = Resources.LoadAll<CharacterSO>("SO/Characters"); 
+        foreach (var charSO in loadedCharacters)
+        {
+            characterDatabase.Add(charSO.characterId, charSO);
+        }
+    }
+
+    private void LoadAllEquipmentFromAssets()
+    {
+        equipmentDatabase = new Dictionary<string, EquipmentSO>();
+        var loadedEquipment = Resources.LoadAll<EquipmentSO>("SO/Equipments");
+        foreach (var equipSO in loadedEquipment)
+        {
+            if (!equipmentDatabase.ContainsKey(equipSO.equipmentId))
+            {
+                equipmentDatabase.Add(equipSO.equipmentId, equipSO);
+            }
+        }
+        if (GameConstants.DEBUG_MODE) Debug.Log($"{equipmentDatabase.Count}개의 장비 SO 에셋을 로드했습니다.");
     }
 
     IEnumerator BattleRoutine()
@@ -58,54 +114,45 @@ public class GameManager : MonoBehaviour
         int p1TotalSlots = player1.baseSlots + player1.bonusSlots;
         int p2TotalSlots = player2.baseSlots + player2.bonusSlots;
         currentMaxSlots = Mathf.Max(p1TotalSlots, p2TotalSlots);
-        player1.bonusSlots = 0; player2.bonusSlots = 0;
-
+        
         DetermineAllSlotStates();
-
-        if (GameConstants.DEBUG_MODE) Debug.Log("--- [페이즈] 턴 시작 ---");
         yield return StartCoroutine(ProcessGlobalPhase(GamePhase.TurnStart));
         if (CheckForGameOver()) yield break;
-
-        if (GameConstants.DEBUG_MODE) Debug.Log("--- [페이즈] 카드 공개 ---");
         yield return StartCoroutine(ProcessGlobalPhase(GamePhase.CardReveal));
         if (CheckForGameOver()) yield break;
 
         for (int i = 0; i < currentMaxSlots; i++)
         {
             if (GameConstants.DEBUG_MODE) Debug.Log($"\n<<<<< 라운드 {i + 1} 시작 >>>>>");
-
+            
             bool p1HasSlot = i < player1.registeredSlots.Count;
             bool p2HasSlot = i < player2.registeredSlots.Count;
             RegisteredCardSlot p1Slot = p1HasSlot ? player1.registeredSlots[i] : new RegisteredCardSlot { cardSO = dummyCard, user = null };
             RegisteredCardSlot p2Slot = p2HasSlot ? player2.registeredSlots[i] : new RegisteredCardSlot { cardSO = dummyCard, user = null };
-
+            
             GameObject p1CardObject = Instantiate(cardPrefab, p1BattlePos.position, Quaternion.identity);
             CardView p1CardView = p1CardObject.GetComponent<CardView>();
             p1CardView.Setup(p1Slot.cardSO, GetStateData(p1Slot));
-
+            
             GameObject p2CardObject = Instantiate(cardPrefab, p2BattlePos.position, Quaternion.identity);
             CardView p2CardView = p2CardObject.GetComponent<CardView>();
             p2CardView.Setup(p2Slot.cardSO, GetStateData(p2Slot));
 
             yield return new WaitForSeconds(1f);
+            yield return StartCoroutine(ProcessSingleRound(p1Slot, p2Slot, p1CardView, p2CardView, i)); 
             
-            // ★★★ 수정된 부분 1: 라운드 인덱스 'i'를 ProcessSingleRound에 전달합니다 ★★★
-            yield return StartCoroutine(ProcessSingleRound(p1Slot, p2Slot, p1CardView, p2CardView, i));
-
             p1CardView.DestroyCard();
             p2CardView.DestroyCard();
             yield return new WaitForSeconds(0.5f);
-
+            
             if (CheckForGameOver()) yield break;
         }
-
-        if (GameConstants.DEBUG_MODE) Debug.Log("--- [페이즈] 턴 종료 ---");
+        
         yield return StartCoroutine(ProcessGlobalPhase(GamePhase.TurnEnd));
         if (CheckForGameOver()) yield break;
-
         ApplySanityDamage();
         if (CheckForGameOver()) yield break;
-
+        
         player1.ClearAllSlotBuffs();
         player2.ClearAllSlotBuffs();
         if (GameConstants.DEBUG_MODE) Debug.Log("\n--- 모든 페이즈 및 라운드 정상 종료 ---");
@@ -116,29 +163,16 @@ public class GameManager : MonoBehaviour
         foreach (var slot in player1.registeredSlots) DetermineSlotState(slot);
         foreach (var slot in player2.registeredSlots) DetermineSlotState(slot);
     }
-
+    
     void DetermineSlotState(RegisteredCardSlot slot)
-{
-    if (slot.user == null) { slot.state = SlotState.Awakened; return; }
-
-    // ★★★ 수정된 부분 ★★★
-    // 사용자의 정신력이 0 이상이면 자각(Awakened), 0 미만이면 계시(Revelation)로 결정
-    slot.state = (slot.user.sanity >= 0) ? SlotState.Awakened : SlotState.Revelation;
-    
-    // 각성(Encroachment) / 침식(Corrosion)으로 변하는 조건은 이전과 동일하게 유지됩니다.
-    if (slot.state == SlotState.Awakened && slot.user.sanity == 15 && slot.cardSO.HasEncroachmentState)
     {
-        slot.state = SlotState.Encroachment;
+        if (slot.user == null) { slot.state = SlotState.Awakened; return; }
+        slot.state = (slot.user.sanity >= 0) ? SlotState.Awakened : SlotState.Revelation;
+        if (slot.state == SlotState.Awakened && slot.user.sanity == 15 && slot.cardSO.HasEncroachmentState) slot.state = SlotState.Encroachment;
+        else if (slot.state == SlotState.Revelation && slot.user.sanity == -15 && slot.cardSO.HasCorrosionState) slot.state = SlotState.Corrosion;
+        if (GameConstants.DEBUG_MODE) Debug.Log($"{slot.user.characterName}의 카드 '{GetStateData(slot).stateName}' 최종 상태: {slot.state}");
     }
-    else if (slot.state == SlotState.Revelation && slot.user.sanity == -15 && slot.cardSO.HasCorrosionState)
-    {
-        slot.state = SlotState.Corrosion;
-    }
-    
-    if (GameConstants.DEBUG_MODE) Debug.Log($"{slot.user.characterName}의 카드 '{GetStateData(slot).stateName}' 최종 상태: {slot.state}");
-}
 
-    // ★★★ 수정된 부분 2: roundIndex 파라미터를 받도록 수정 ★★★
     IEnumerator ProcessSingleRound(RegisteredCardSlot slot1, RegisteredCardSlot slot2, CardView view1, CardView view2, int roundIndex)
     {
         if (GameConstants.DEBUG_MODE) Debug.Log("--- [페이즈] 전투 전 ---");
@@ -151,22 +185,22 @@ public class GameManager : MonoBehaviour
             int p1InitiativeRoll = DiceRollParser.Parse(GetStateData(slot1).attackDice).Roll();
             int p2InitiativeRoll = DiceRollParser.Parse(GetStateData(slot2).attackDice).Roll();
             if (GameConstants.DEBUG_MODE) Debug.Log($"{slot1.user.characterName} 주사위: {p1InitiativeRoll}  vs  {slot2.user.characterName} 주사위: {p2InitiativeRoll}");
-
+            
             RegisteredCardSlot winnerSlot = null, loserSlot = null;
-            Player winnerPlayer = null, loserPlayer = null; // 슬롯 버프 적용을 위해 Player 정보도 저장
+            Player winnerPlayer = null, loserPlayer = null;
             CardView winnerView = null, loserView = null;
-            int winnerIndex = -1, loserIndex = -1; // 슬롯 버프 적용을 위해 인덱스 정보도 저장
+            int winnerIndex = -1, loserIndex = -1;
 
-            if (p1InitiativeRoll > p2InitiativeRoll)
-            {
-                winnerSlot = slot1; loserSlot = slot2;
+            if (p1InitiativeRoll > p2InitiativeRoll) 
+            { 
+                winnerSlot = slot1; loserSlot = slot2; 
                 winnerPlayer = player1; loserPlayer = player2;
                 winnerView = view1; loserView = view2;
                 winnerIndex = roundIndex; loserIndex = roundIndex;
             }
-            else if (p2InitiativeRoll > p1InitiativeRoll)
-            {
-                winnerSlot = slot2; loserSlot = slot1;
+            else if (p2InitiativeRoll > p1InitiativeRoll) 
+            { 
+                winnerSlot = slot2; loserSlot = slot1; 
                 winnerPlayer = player2; loserPlayer = player1;
                 winnerView = view2; loserView = view1;
                 winnerIndex = roundIndex; loserIndex = roundIndex;
@@ -180,7 +214,6 @@ public class GameManager : MonoBehaviour
                 Character attacker = winnerSlot.user;
                 Character defender = loserSlot.user;
 
-                // ★★★ 수정된 부분 3: CalculateFinalDamage 호출 시 roundIndex(winnerIndex)를 전달 ★★★
                 int finalDamage = CalculateFinalDamage(winnerSlot, loserSlot, winnerPlayer, winnerIndex);
                 defender.TakeDamage(finalDamage);
 
@@ -189,8 +222,23 @@ public class GameManager : MonoBehaviour
 
                 if (GameConstants.DEBUG_MODE)
                 {
-                    string attackerStatus = $"공격자: {attacker.characterName} | HP: {attacker.currentHp}/{attacker.maxHealth} | 정신력: {attacker.sanity} | 사용 카드: {GetStateData(winnerSlot).stateName}";
-                    string defenderStatus = $"방어자: {defender.characterName} | HP: {defender.currentHp}/{defender.maxHealth} | 정신력: {defender.sanity} | 사용 카드: {GetStateData(loserSlot).stateName}";
+                    string GetEquipmentList(Character character)
+                    {
+                        if (character.equippedItems.Count == 0)
+                        {
+                            return "없음";
+                        }
+                    // LINQ를 사용해 장비 이름들을 쉼표로 연결하여 하나의 문자열로 만듭니다.
+                        return string.Join(", ", character.equippedItems.Values.Select(item => item.equipmentName));
+                    }
+
+                    string attackerEquipment = GetEquipmentList(attacker);
+                    string defenderEquipment = GetEquipmentList(defender);
+
+                    // 장비 정보 추가
+                    string attackerStatus = $"공격자: {attacker.characterName} | HP: {attacker.currentHp}/{attacker.GetFinalMaxHealth()} | 정신력: {attacker.sanity} | 장비: {attackerEquipment} | 카드: {GetStateData(winnerSlot).stateName}";
+                    string defenderStatus = $"방어자: {defender.characterName} | HP: {defender.currentHp}/{defender.GetFinalMaxHealth()} | 정신력: {defender.sanity} | 장비: {defenderEquipment} | 카드: {GetStateData(loserSlot).stateName}";
+    
                     Debug.Log($"[전투 결과]\n{attackerStatus}\n{defenderStatus}");
                 }
 
@@ -209,42 +257,30 @@ public class GameManager : MonoBehaviour
                 if (GameConstants.DEBUG_MODE) Debug.Log("[전투] 우위 경쟁 무승부! 전투가 무효 처리됩니다.");
             }
         }
-
         yield return new WaitForSeconds(1f);
-
         if (GameConstants.DEBUG_MODE) Debug.Log("--- [페이즈] 전투 후 ---");
         yield return StartCoroutine(ProcessRoundPhase(GamePhase.PostCombat, slot1, slot2));
     }
 
-    // ★★★ 수정된 부분 4: roundIndex(slotIndex)를 파라미터로 받도록 수정 ★★★
     private int CalculateFinalDamage(RegisteredCardSlot attackerSlot, RegisteredCardSlot defenderSlot, Player attackerPlayer, int slotIndex)
     {
         Character attacker = attackerSlot.user;
         Character defender = defenderSlot.user;
         CardStateData attackerCardState = GetStateData(attackerSlot);
 
-        float damageReduction = GameConstants.MAX_DAMAGE_REDUCTION_RATE * (defender.defense / (float)(defender.defense + GameConstants.DEFENSE_CONSTANT));
+        float damageReduction = GameConstants.MAX_DAMAGE_REDUCTION_RATE * (defender.GetFinalDefense() / (float)(defender.GetFinalDefense() + GameConstants.DEFENSE_CONSTANT));
         
         DiceRoll diceRoll = DiceRollParser.Parse(attackerCardState.attackDice);
-        // ★★★ 수정된 부분 5: 전달받은 slotIndex를 사용해 슬롯 버프 적용 ★★★
-        if (attackerPlayer.slotDiceCountBuffs.ContainsKey(slotIndex))
-        {
-            diceRoll.numberOfDice += attackerPlayer.slotDiceCountBuffs[slotIndex];
-            if (GameConstants.DEBUG_MODE) Debug.Log($"[슬롯 버프] 주사위 굴림 +{attackerPlayer.slotDiceCountBuffs[slotIndex]}");
-        }
-        if (attackerPlayer.slotDiceMaxBuffs.ContainsKey(slotIndex))
-        {
-            diceRoll.sidesOfDice += attackerPlayer.slotDiceMaxBuffs[slotIndex];
-            if (GameConstants.DEBUG_MODE) Debug.Log($"[슬롯 버프] 주사위 최대값 +{attackerPlayer.slotDiceMaxBuffs[slotIndex]}");
-        }
+        if (attackerPlayer.slotDiceCountBuffs.ContainsKey(slotIndex)) { diceRoll.numberOfDice += attackerPlayer.slotDiceCountBuffs[slotIndex]; }
+        if (attackerPlayer.slotDiceMaxBuffs.ContainsKey(slotIndex)) { diceRoll.sidesOfDice += attackerPlayer.slotDiceMaxBuffs[slotIndex]; }
         int rolledDiceValue = diceRoll.Roll();
         
-        float attackDamage = attacker.attackPower * (GameConstants.ATTACK_CONSTANT + Mathf.Pow(rolledDiceValue / 5.5f, 1.3f));
-        bool isCritical = Random.value < attacker.critRate;
-        float critMultiplier = isCritical ? attacker.critMultiplier : 1.0f;
-        float resistance = defender.GetResistanceFor(attackerCardState.attackType);
+        float attackDamage = attacker.GetFinalAttackPower() * (GameConstants.ATTACK_CONSTANT + Mathf.Pow(rolledDiceValue / 5.5f, 1.3f));
+        bool isCritical = Random.value < attacker.GetFinalCritRate();
+        float critMultiplier = isCritical ? attacker.GetFinalCritMultiplier() : 1.0f;
+        float resistance = defender.GetFinalResistanceFor(attackerCardState.attackType);
         float finalDamage = attackDamage * (1 - damageReduction) * critMultiplier * resistance;
-
+        
         if (GameConstants.DEBUG_MODE)
         {
             if (isCritical) Debug.Log($"[데미지 계산] {attacker.characterName}의 치명타 발생!");
@@ -296,7 +332,7 @@ public class GameManager : MonoBehaviour
                 {
                     execution = new CardEffectExecution { effect = tempEffect, ownerPlayer = owner, opponentPlayer = opponent, ownerUser = ownerSlot.user, opponentUser = opponentSlot?.user },
                     speed = ownerSlot.cardSO.speed,
-                    attackPower = DiceRollParser.Parse(currentStateData.attackDice).Roll(),
+                    attackPower = ownerSlot.user.GetFinalAttackPower(), 
                     randomId = System.Guid.NewGuid()
                 });
             }
@@ -314,11 +350,10 @@ public class GameManager : MonoBehaviour
             return a.randomId.CompareTo(b.randomId);
         });
     }
-
+    
     CardStateData GetStateData(RegisteredCardSlot slot)
     {
         if (slot == null || slot.cardSO == null) return null;
-        
         switch (slot.state)
         {
             case SlotState.Encroachment: return slot.cardSO.encroachmentState;
@@ -334,9 +369,7 @@ public class GameManager : MonoBehaviour
         {
             if (character.sanity == -15 && character.currentHp > 0)
             {
-                int sanityDamage = Mathf.FloorToInt(character.maxHealth * 0.1f);
-                if (GameConstants.DEBUG_MODE) Debug.Log($"{character.characterName}이(가) 낮은 정신력으로 {sanityDamage}의 피해를 입습니다!");
-                character.TakeDamage(sanityDamage);
+                character.TakeDamage(Mathf.FloorToInt(character.GetFinalMaxHealth() * 0.1f));
             }
         }
     }

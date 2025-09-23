@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+// --- 피해 및 회복 효과 ---
 public class DamageEffect : CardEffect
 {
     public override GamePhase TriggerPhase => GamePhase.PostCombat;
@@ -23,20 +24,18 @@ public class HealEffect : CardEffect
     }
 }
 
+// --- 플레이어 대상 효과 ---
 public class ExpandSlotsEffect : CardEffect
 {
     public override GamePhase TriggerPhase => GamePhase.TurnEnd;
     public override void Initialize(Dictionary<string, object> parameters) { }
     public override void Execute(Player ownerPlayer, Player opponentPlayer, Character ownerUser, Character opponentUser)
     {
-        if (ownerPlayer != null)
-        {
-            ownerPlayer.bonusSlots += 1;
-            Debug.Log($"{ownerPlayer.playerName}의 다음 턴 최대 슬롯이 1 증가합니다!");
-        }
+        if (ownerPlayer != null) ownerPlayer.bonusSlots += 1;
     }
 }
 
+// --- 캐릭터 임시 능력치(버프/디버프) 변경 효과 ---
 public class ModifyResistanceEffect : CardEffect
 {
     public override GamePhase TriggerPhase => GamePhase.PreCombat;
@@ -53,71 +52,64 @@ public class ModifyResistanceEffect : CardEffect
         if (opponentUser == null) return;
         switch (targetType)
         {
-            case AttackType.Slash: opponentUser.resistanceSlash += amount; break;
-            case AttackType.Pierce: opponentUser.resistancePierce += amount; break;
-            case AttackType.Blunt: opponentUser.resistanceBlunt += amount; break;
+            case AttackType.Slash: opponentUser.bonusResistanceSlash += amount; break;
+            case AttackType.Pierce: opponentUser.bonusResistancePierce += amount; break;
+            case AttackType.Blunt: opponentUser.bonusResistanceBlunt += amount; break;
         }
-    }
-}
-
-// 다음 턴 특정 슬롯의 주사위 굴림 횟수를 증가시키는 효과
-public class BuffNextTurnSlotEffect : CardEffect
-{
-    // 이 효과는 전투가 끝난 후 다음 턴을 위해 발동하는 것이 자연스럽습니다.
-    public override GamePhase TriggerPhase => GamePhase.PostCombat;
-    
-    private int targetSlotIndex; // 버프를 적용할 슬롯 인덱스 (1번 슬롯 -> 인덱스 0)
-    private int diceCountBonus;  // 주사위 굴림 횟수 증가량
-
-    public override void Initialize(Dictionary<string, object> parameters)
-    {
-        // Inspector에서 입력한 슬롯 번호(1)를 인덱스(0)로 변환
-        targetSlotIndex = System.Convert.ToInt32(parameters["targetSlot"]) - 1;
-        diceCountBonus = System.Convert.ToInt32(parameters["bonusDice"]);
-    }
-    
-    // 효과 실행: 소유자(owner) Player의 버프 Dictionary에 정보를 기록합니다.
-    public override void Execute(Player ownerPlayer, Player opponentPlayer, Character ownerUser, Character opponentUser)
-    {
-        if (ownerPlayer == null) return;
-
-        // 이미 해당 슬롯에 다른 버프가 있다면 값을 더하고, 없다면 새로 추가합니다.
-        if (ownerPlayer.slotDiceCountBuffs.ContainsKey(targetSlotIndex))
-        {
-            ownerPlayer.slotDiceCountBuffs[targetSlotIndex] += diceCountBonus;
-        }
-        else
-        {
-            ownerPlayer.slotDiceCountBuffs.Add(targetSlotIndex, diceCountBonus);
-        }
-        
-        Debug.Log($"{ownerPlayer.playerName}의 다음 턴 {targetSlotIndex + 1}번 슬롯의 주사위 굴림 횟수가 {diceCountBonus}만큼 증가합니다!");
     }
 }
 
 public class ModifySanityEffect : CardEffect
 {
-    // 이 효과는 즉시 발동하는 경우가 많으므로 PreCombat 페이즈가 적합합니다.
     public override GamePhase TriggerPhase => GamePhase.PreCombat;
-    
-    private string target; // "Self" 또는 "Opponent"
-    private int amount;    // 변경할 수치 (예: -2, 5)
-
+    private string target;
+    private int amount;
     public override void Initialize(Dictionary<string, object> parameters)
     {
         target = parameters["target"].ToString();
         amount = System.Convert.ToInt32(parameters["amount"]);
     }
-
     public override void Execute(Player ownerPlayer, Player opponentPlayer, Character ownerUser, Character opponentUser)
     {
-        if (target.Equals("Self", System.StringComparison.OrdinalIgnoreCase))
-        {
-            if (ownerUser != null) ownerUser.ChangeSanity(amount);
-        }
-        else if (target.Equals("Opponent", System.StringComparison.OrdinalIgnoreCase))
-        {
-            if (opponentUser != null) opponentUser.ChangeSanity(amount);
-        }
+        if (target.Equals("Self", System.StringComparison.OrdinalIgnoreCase) && ownerUser != null) ownerUser.ChangeSanity(amount);
+        else if (target.Equals("Opponent", System.StringComparison.OrdinalIgnoreCase) && opponentUser != null) opponentUser.ChangeSanity(amount);
+    }
+}
+
+
+// --- 슬롯 대상 효과 ---
+public class BuffNextTurnSlotEffect : CardEffect
+{
+    public override GamePhase TriggerPhase => GamePhase.PostCombat;
+    private int targetSlotIndex;
+    private int diceCountBonus;
+    public override void Initialize(Dictionary<string, object> parameters)
+    {
+        targetSlotIndex = System.Convert.ToInt32(parameters["targetSlot"]) - 1;
+        diceCountBonus = System.Convert.ToInt32(parameters["bonusDice"]);
+    }
+    public override void Execute(Player ownerPlayer, Player opponentPlayer, Character ownerUser, Character opponentUser)
+    {
+        if (ownerPlayer == null) return;
+        if (ownerPlayer.slotDiceCountBuffs.ContainsKey(targetSlotIndex)) { ownerPlayer.slotDiceCountBuffs[targetSlotIndex] += diceCountBonus; }
+        else { ownerPlayer.slotDiceCountBuffs.Add(targetSlotIndex, diceCountBonus); }
+    }
+}
+
+public class BuffNextTurnSlotDiceMaxEffect : CardEffect
+{
+    public override GamePhase TriggerPhase => GamePhase.PostCombat;
+    private int targetSlotIndex;
+    private int diceMaxBonus;
+    public override void Initialize(Dictionary<string, object> parameters)
+    {
+        targetSlotIndex = System.Convert.ToInt32(parameters["targetSlot"]) - 1;
+        diceMaxBonus = System.Convert.ToInt32(parameters["bonusMax"]);
+    }
+    public override void Execute(Player ownerPlayer, Player opponentPlayer, Character ownerUser, Character opponentUser)
+    {
+        if (ownerPlayer == null) return;
+        if (ownerPlayer.slotDiceMaxBuffs.ContainsKey(targetSlotIndex)) { ownerPlayer.slotDiceMaxBuffs[targetSlotIndex] += diceMaxBonus; }
+        else { ownerPlayer.slotDiceMaxBuffs.Add(targetSlotIndex, diceMaxBonus); }
     }
 }
