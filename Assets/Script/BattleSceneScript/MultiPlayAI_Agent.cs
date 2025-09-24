@@ -35,6 +35,6 @@ public class MultiPlayAI_Agent : MonoBehaviour, IPlayerAgent
         // --- AI 로직 끝 ---
         
         // 행동이 끝났음을 GameManager에 알림
-        gameManager.OnAgentTurnFinished(controlledPlayer);
+        //gameManager.OnAgentTurnFinished(controlledPlayer);
     }
 }

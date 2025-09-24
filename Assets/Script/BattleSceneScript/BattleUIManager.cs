@@ -31,16 +31,7 @@ public class BattleUIManager : MonoBehaviour
 
     void Start()
     {
-        /*
-        if (player1.deck.Count == 0)
-        {
-            for (int i = 0; i < 10; i++) player1.deck.Add(gameManager.GetCardData("c001"));
-            for (int i = 0; i < 10; i++) player1.deck.Add(gameManager.GetCardData("c002"));
-            player1.ShuffleDeck();
-        }
-        
-        InitialDraw();
-        */
+
     }
 
     public void InitializeUI(Player player, int maxSlots)

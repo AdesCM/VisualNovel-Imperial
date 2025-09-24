@@ -32,7 +32,7 @@ public class SinglePlayAI_Agent : MonoBehaviour, IPlayerAgent
         }
         
         // ★★★ 삭제된 부분 ★★★
-        // gameManager.OnAgentTurnFinished(controlledPlayer); // -> 이 줄을 삭제합니다.
+        //gameManager.OnAgentTurnFinished(controlledPlayer); // -> 이 줄을 삭제합니다.
     }
 
     

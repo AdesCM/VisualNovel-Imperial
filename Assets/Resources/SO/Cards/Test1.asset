@@ -18,16 +18,20 @@ MonoBehaviour:
   awakenedState:
     stateName: "\uBC1C\uC545"
     attackDice: 3+1d4
+    attackType: 0
     effects: []
-  corruptedState:
-    stateName: "\uBC1C\uC545"
-    attackDice: 3+1d4
+  revelationState:
+    stateName: 
+    attackDice: 
+    attackType: 0
     effects: []
-  ascendedState:
-    stateName: "\uBC1C\uC545"
-    attackDice: 3+1d4
+  encroachmentState:
+    stateName: 
+    attackDice: 
+    attackType: 0
     effects: []
-  abyssalState:
-    stateName: "\uBC1C\uC545"
-    attackDice: 3+1d4
+  corrosionState:
+    stateName: 
+    attackDice: 
+    attackType: 0
     effects: []

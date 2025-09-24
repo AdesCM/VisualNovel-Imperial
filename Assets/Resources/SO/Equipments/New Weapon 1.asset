@@ -12,10 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name: New Weapon 1
   m_EditorClassIdentifier: Assembly-CSharp::WeaponSO
-  equipmentId: 
-  equipmentName: 
-  description: 
+  equipmentId: longsword_01
+  equipmentName: "\uB871\uC18C\uB4DC"
+  description: "\uAC15\uCCA0\uB85C\uB41C \uB871\uC18C\uB4DC\uC774\uB2E4."
   icon: {fileID: 0}
   type: 0
   grantedSkill: {fileID: 0}
-  statModifiers: []
+  statModifiers:
+  - statToModify: 1
+    value: 3

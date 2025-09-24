@@ -12,18 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf72825348c4b1d47aa35fb201be0dd4, type: 3}
   m_Name: Enemy
   m_EditorClassIdentifier: 
-  cardId: 
+  cardId: e001
   cardArt: {fileID: 0}
-  speed: 0
+  speed: 2
   awakenedState:
-    stateName: 
-    attackDice: 
+    stateName: "\uD560\uD034\uAE30"
+    attackDice: 2+1d5
     attackType: 0
     effects: []
   revelationState:
-    stateName: 
-    attackDice: 
-    attackType: 0
+    stateName: "\uB4E4\uC774\uBC15\uAE30"
+    attackDice: 7-1d5
+    attackType: 2
     effects: []
   encroachmentState:
     stateName: 

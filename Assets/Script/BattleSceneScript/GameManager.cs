@@ -100,18 +100,11 @@ public class GameManager : MonoBehaviour
         Character mage = new Character(mageSO);
         player1.characters.Add(knight);
         player2.characters.Add(mage);
-        
-        if (player2.agent != null)
-        {
-            player2.agent.PrepareTurn();
-            DetermineAllSlotStates(player2);
-            if (uiManager != null) uiManager.UpdateOpponentStatus();
-        }
 
         if (uiManager != null)
         {
             int initialMaxSlots = player1.baseSlots + player1.bonusSlots;
-            uiManager.InitializeUI(player1, initialMaxSlots); // 초기 UI 생성 및 8장 드로우
+            uiManager.InitializeUI(player1, initialMaxSlots); // 초기 UI 생성 및 4장 드로우
         }
     }
 
@@ -165,17 +158,6 @@ public class GameManager : MonoBehaviour
     
     public void StartCombat()
     {
-        // 이미 전투가 진행 중이면(isBattleOver가 false이면) 중복 실행 방지
-        if (!isBattleOver) return;
-
-        // "이제 전투를 시작할 준비가 되었다"는 신호를 보냅니다.
-        // isBattleOver를 true로 유지하여, GameLoop가 이 신호를 받을 수 있게 합니다.
-        
-        // 이 함수가 직접 BattleRoutine을 시작하는 대신, isBattleOver 플래그만 관리하도록 할 수 있습니다.
-        // 하지만 현재 Agent 시스템과 연동하려면 약간 더 복잡해집니다.
-        
-        // 더 간단하고 확실한 해결책으로 돌아가겠습니다.
-        // BattleRoutine이 끝나고 다음 턴을 준비하는 것으로 역할을 명확히 합니다.
 
         if (GameConstants.DEBUG_MODE) Debug.Log("--- 턴 종료 버튼 입력: 전투 시작 ---");
         isBattleOver = false; // "전투 시작" 신호
@@ -481,7 +463,7 @@ public class GameManager : MonoBehaviour
             if (ally.currentHp > 0) { ally.ChangeSanity(-5); }
         }
     }
-
+    /* 일단 주석처리.
     public void OnAgentTurnFinished(Player player)
     {
         player.isTurnFinished = true;
@@ -493,4 +475,7 @@ public class GameManager : MonoBehaviour
             StartCoroutine(BattleRoutine());
         }
     }
+    */
+
+    
 }

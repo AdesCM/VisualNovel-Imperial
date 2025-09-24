@@ -67,9 +67,10 @@ public class Player : MonoBehaviour
         slotDiceMaxBuffs.Clear();
     }
 
-    // ★★★ 이 플레이어를 조종할 Agent ★★★
+    // 플레이어를 조종할 Agent
     [HideInInspector] public IPlayerAgent agent;
-    public bool isTurnFinished = false;
+    //일단 주섳리
+    //public bool isTurnFinished = false;
 
     void Awake()
     {
