@@ -41,6 +41,8 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        //씬간 캐릭터 데이터 이동
+        //player1.characters = PlayerDataManager.Instance.playerCharacters;
         
         // 데이터베이스에서 캐릭터 불러오기
         CharacterSO knightSO = characterDatabase["briram_spear"];
