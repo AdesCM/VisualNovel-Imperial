@@ -12,7 +12,6 @@ public class HandCardView : MonoBehaviour, IPointerClickHandler, IBeginDragHandl
     private Transform originalParent;
     private CanvasGroup canvasGroup;
 
-    // ★★★ 에러의 원인 2: 이 함수가 없었습니다. ★★★
     public void Setup(CardDataSO data, BattleUIManager manager)
 {
     cardSO = data;

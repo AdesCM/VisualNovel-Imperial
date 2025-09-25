@@ -30,6 +30,8 @@ public class GameManager : MonoBehaviour
     private struct CardEffectExecution { public CardEffect effect; public Player ownerPlayer; public Player opponentPlayer; public Character ownerUser; public Character opponentUser; }
     private struct EffectToSort { public CardEffectExecution execution; public int speed; public int attackPower; public System.Guid randomId; }
 
+    private int currentTurn = 0; // 현재 턴 번호 기록
+
     void Awake()
     {
         LoadAllCardsFromAssets();
@@ -74,6 +76,8 @@ public class GameManager : MonoBehaviour
 
     IEnumerator GameLoop()
     {
+
+        
         // 1. 게임 시작 시 최초 설정
         InitialSetup();
 
@@ -101,6 +105,7 @@ public class GameManager : MonoBehaviour
         player1.characters.Add(knight);
         player2.characters.Add(mage);
 
+
         if (uiManager != null)
         {
             int initialMaxSlots = player1.baseSlots + player1.bonusSlots;
@@ -110,6 +115,7 @@ public class GameManager : MonoBehaviour
 
     void StartNewTurn()
     {
+        currentTurn++;
         if (GameConstants.DEBUG_MODE) Debug.Log("========== 새로운 턴 시작 ==========");
 
         // 1. 이전 턴의 등록된 카드 모두 삭제
@@ -169,6 +175,11 @@ public class GameManager : MonoBehaviour
         if (cardDatabase.ContainsKey(cardId)) { return cardDatabase[cardId]; }
         Debug.LogError($"CardDatabase에 ID가 '{cardId}'인 카드가 없습니다!");
         return null;
+    }
+
+    public int GetCurrentTurn()
+    {
+        return currentTurn;
     }
 
     IEnumerator BattleRoutine()
@@ -463,7 +474,8 @@ public class GameManager : MonoBehaviour
             if (ally.currentHp > 0) { ally.ChangeSanity(-5); }
         }
     }
-    /* 일단 주석처리.
+     //일단 주석처리. 근데 이건 멀티플레이에서나 필요한거 아닌가? 나중에 멀티플레이 배틀씬 만들고 생각해보자. 이 Scene에서는 사용하지 않을 것지만 기억하는 용도로 남겨둠
+     /*
     public void OnAgentTurnFinished(Player player)
     {
         player.isTurnFinished = true;
@@ -476,6 +488,7 @@ public class GameManager : MonoBehaviour
         }
     }
     */
+    
 
     
 }
