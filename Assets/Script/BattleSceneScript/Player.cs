@@ -16,7 +16,8 @@ public class Player : MonoBehaviour
     public List<Character> characters = new List<Character>();
 
     // ★★★ 덱, 핸드, 버린 카드 목록 추가 ★★★
-    public List<CardDataSO> deck = new List<CardDataSO>();
+    public List<CardDataSO> masterDeck = new List<CardDataSO>(); // 원본 덱 (절대 변하지 않음)
+    public List<CardDataSO> deck = new List<CardDataSO>();         // 플레이용 덱 (카드를 뽑으면 줄어듦)
     public List<CardDataSO> hand = new List<CardDataSO>();
     public List<CardDataSO> discardPile = new List<CardDataSO>();
 
@@ -39,18 +40,18 @@ public class Player : MonoBehaviour
         List<CardDataSO> drawnCards = new List<CardDataSO>();
         for (int i = 0; i < amount; i++)
         {
-            if (deck.Count == 0)
+            if (deck.Count == 0) // 플레이용 덱이 비었는지 확인
             {
-                if (discardPile.Count == 0)
+                if (masterDeck.Count == 0)
                 {
-                    if (GameConstants.DEBUG_MODE) Debug.Log("덱과 버린 카드 더미가 모두 비었습니다!");
-                    break; // 더 이상 뽑을 카드가 없음
+                    if (GameConstants.DEBUG_MODE) Debug.Log("원본 덱이 비어있어 더 이상 뽑을 수 없습니다!");
+                    break; 
                 }
-                // 덱이 비면 버린 카드 더미를 섞어서 다시 덱으로 만듦
-                deck.AddRange(discardPile);
-                discardPile.Clear();
+                
+                // 원본 덱을 복사하여 플레이용 덱을 새로 채움
+                deck.AddRange(masterDeck);
                 ShuffleDeck();
-                if (GameConstants.DEBUG_MODE) Debug.Log("덱을 재구성하고 섞습니다.");
+                if (GameConstants.DEBUG_MODE) Debug.Log("덱이 소진되어 원본 덱으로 새로 채우고 섞습니다.");
             }
             
             CardDataSO cardToDraw = deck[0];

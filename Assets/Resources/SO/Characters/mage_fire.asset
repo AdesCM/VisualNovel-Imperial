@@ -23,4 +23,7 @@ MonoBehaviour:
   baseResistanceSlash: 1
   baseResistancePierce: 1
   baseResistanceBlunt: 1
-  innateSkills: []
+  innateSkills:
+  - {fileID: 11400000, guid: c0a82cd7425b77845b1281fe1de9c1ce, type: 2}
+  - {fileID: 11400000, guid: c0a82cd7425b77845b1281fe1de9c1ce, type: 2}
+  - {fileID: 11400000, guid: c0a82cd7425b77845b1281fe1de9c1ce, type: 2}

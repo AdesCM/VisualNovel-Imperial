@@ -26,6 +26,8 @@ public class GameManager : MonoBehaviour
     private int currentMaxSlots;
 
     private bool isBattleOver = true; // 현재 전투가 끝났는지 여부를 나타내는 플래그
+    private StageData currentStageData;
+    private int currentWaveIndex = 0;
 
     private struct CardEffectExecution { public CardEffect effect; public Player ownerPlayer; public Player opponentPlayer; public Character ownerUser; public Character opponentUser; }
     private struct EffectToSort { public CardEffectExecution execution; public int speed; public int attackPower; public System.Guid randomId; }
@@ -79,7 +81,8 @@ public class GameManager : MonoBehaviour
 
         
         // 1. 게임 시작 시 최초 설정
-        InitialSetup();
+        //InitialSetup();
+        yield return StartCoroutine(InitialSetup());
 
         // 2. 게임이 끝날 때까지 무한 반복
         while (true)
@@ -87,30 +90,66 @@ public class GameManager : MonoBehaviour
             // 3. 전투가 끝날 때까지 대기
             yield return new WaitUntil(() => isBattleOver);
 
+            // 4. 웨이브가 클리어되었는지 확인
+            bool isEnemyTeamWiped = !player2.characters.Any(c => c.currentHp > 0);
+            if (isEnemyTeamWiped)
+            {
+                currentWaveIndex++;
+                if (currentWaveIndex < currentStageData.Waves.Count)
+                {
+                    // 다음 웨이브 시작
+                    yield return StartCoroutine(StartWave(currentWaveIndex));
+                }
+                else
+                {
+                    // 스테이지 클리어
+                    StageClear();
+                    yield break; // GameLoop 종료
+                }
+            }
+
             // 4. 전투가 끝나면, 다음 턴을 준비
             yield return new WaitForSeconds(2f); // 턴 사이에 잠시 대기
             StartNewTurn();
         }
     }
 
-    void InitialSetup()
+     IEnumerator InitialSetup()
     {
-        player1.agent?.Setup(player1, this);
-        player2.agent?.Setup(player2, this);
+        currentStageData = StageManager.Instance.GetCurrentStageData();
+        if (currentStageData == null)
+        {
+            Debug.LogError("현재 스테이지 정보를 찾을 수 없습니다!");
+            yield break;
+        }
 
+        // --- Player 1 (User) 설정 ---
+        player1.agent?.Setup(player1, this, null);
         CharacterSO knightSO = characterDatabase["briram_spear"];
-        CharacterSO mageSO = characterDatabase["mage_fire"];
         Character knight = new Character(knightSO);
-        Character mage = new Character(mageSO);
+        EquipmentSO longsword = equipmentDatabase["longsword_01"];
+        knight.EquipItem(longsword);
         player1.characters.Add(knight);
-        player2.characters.Add(mage);
-
+        
+        // --- Player 2 (AI) 설정 ---
+        // ★★★ 로직 순서 오류 수정: 캐릭터를 먼저 추가한 후, Agent를 설정합니다 ★★★
+        player2.characters.Clear();
+        foreach (var enemyId in currentStageData.Waves[0])
+        {
+            CharacterSO enemySO = characterDatabase[enemyId];
+            player2.characters.Add(new Character(enemySO));
+        }
+        AIPatternSO aiPattern = StageManager.Instance.GetAIPattern(currentStageData.AIPatternID);
+        player2.agent?.Setup(player2, this, aiPattern); // 이제 Skill Pool이 정상적으로 구성됩니다.
 
         if (uiManager != null)
         {
             int initialMaxSlots = player1.baseSlots + player1.bonusSlots;
-            uiManager.InitializeUI(player1, initialMaxSlots); // 초기 UI 생성 및 4장 드로우
+            uiManager.InitializePlayerUI(player1, initialMaxSlots);
         }
+        
+        // --- 첫 턴 준비 ---
+        StartNewTurn();
     }
 
     void StartNewTurn()
@@ -135,12 +174,35 @@ public class GameManager : MonoBehaviour
         // 3. 플레이어에게 4장의 카드 드로우 명령
         if (uiManager != null)
         {
+            int maxSlots = player1.baseSlots + player1.bonusSlots;
+            uiManager.InitializeRegisteredSlots(maxSlots);
             uiManager.DrawNewCards(4);
         }
     }
+
+    IEnumerator StartWave(int waveIndex)
+    {
+        if (GameConstants.DEBUG_MODE) Debug.Log($"<<<<< WAVE {waveIndex + 1} 시작 >>>>>");
+        player2.characters.Clear();
+        foreach (var enemyId in currentStageData.Waves[waveIndex])
+        {
+            CharacterSO enemySO = characterDatabase[enemyId];
+            player2.characters.Add(new Character(enemySO));
+        }
+        // AI Agent는 이미 존재하므로 Setup을 다시 호출할 필요는 없지만, 스킬 풀 갱신 등 필요 시 호출 가능
+        (player2.agent as SinglePlayAI_Agent)?.BuildDynamicSkillPool(); // 예시: 스킬 풀 재구성
+        
+        // 다음 턴 준비 (AI 행동 결정 및 UI 업데이트)
+        StartNewTurn();
+        yield return null;
+    }
+
+    void StageClear()
+    {
+        if (GameConstants.DEBUG_MODE) Debug.Log("🎉🎉🎉 스테이지 클리어! 🎉🎉🎉");
+    }
     
 
-    // ★★★ 요청하신 경로가 적용된 로딩 함수들 ★★★
     private void LoadAllCardsFromAssets()
     {
         cardDatabase = new Dictionary<string, CardDataSO>();
@@ -164,9 +226,11 @@ public class GameManager : MonoBehaviour
     
     public void StartCombat()
     {
+        if (isBattleOver) return;
 
         if (GameConstants.DEBUG_MODE) Debug.Log("--- 턴 종료 버튼 입력: 전투 시작 ---");
-        isBattleOver = false; // "전투 시작" 신호
+        DetermineAllSlotStates(player1);
+        //isBattleOver = false; // "전투 시작" 신호
         StartCoroutine(BattleRoutine());
     }
     
@@ -184,6 +248,7 @@ public class GameManager : MonoBehaviour
 
     IEnumerator BattleRoutine()
     {
+        isBattleOver = false;
         if (GameConstants.DEBUG_MODE) Debug.Log("--- 전투 시작 ---");
 
         int p1TotalSlots = player1.baseSlots + player1.bonusSlots;
@@ -192,9 +257,9 @@ public class GameManager : MonoBehaviour
         
         
         yield return StartCoroutine(ProcessGlobalPhase(GamePhase.TurnStart));
-        if (CheckForGameOver()) yield break;
+        if (CheckForGameOver()) { isBattleOver = true; yield break; }
         yield return StartCoroutine(ProcessGlobalPhase(GamePhase.CardReveal));
-        if (CheckForGameOver()) yield break;
+        if (CheckForGameOver()) { isBattleOver = true; yield break; }
 
         for (int i = 0; i < currentMaxSlots; i++)
         {
@@ -220,36 +285,19 @@ public class GameManager : MonoBehaviour
             p2CardView.DestroyCard();
             yield return new WaitForSeconds(0.5f);
             
-            if (CheckForGameOver()) yield break;
+            if (CheckForGameOver()) { isBattleOver = true; yield break; }
         }
         
         yield return StartCoroutine(ProcessGlobalPhase(GamePhase.TurnEnd));
-        if (CheckForGameOver()) yield break;
+        if (CheckForGameOver()) { isBattleOver = true; yield break; }
         ApplySanityDamage();
-        if (CheckForGameOver()) yield break;
+        if (CheckForGameOver()) { isBattleOver = true; yield break; }
         
         player1.ClearAllSlotBuffs();
         player2.ClearAllSlotBuffs();
         if (GameConstants.DEBUG_MODE) Debug.Log("\n--- 모든 페이즈 및 라운드 정상 종료 ---");
         yield return new WaitForSeconds(2f); // 턴 사이에 잠시 대기
 
-        // 1. 이전 턴의 등록된 카드 모두 삭제
-        player1.registeredSlots.Clear();
-        player2.registeredSlots.Clear();
-
-        // 2. AI에게 다음 턴 행동 준비 명령
-        if (player2.agent != null)
-        {
-            player2.agent.PrepareTurn();
-            DetermineAllSlotStates(player2);
-            if (uiManager != null) uiManager.UpdateOpponentStatus();
-        }
-
-        // 3. 플레이어에게 4장의 카드 드로우 명령
-        if (uiManager != null)
-        {
-            uiManager.DrawNewCards(4);
-        }
 
         // 4. 모든 준비가 끝났으므로, 다시 "전투 끝남"(입력 대기) 상태로 전환
         isBattleOver = true;
@@ -472,6 +520,10 @@ public class GameManager : MonoBehaviour
         foreach (var ally in deadCharacterTeam.characters)
         {
             if (ally.currentHp > 0) { ally.ChangeSanity(-5); }
+        }
+        if (!player2.characters.Any(c => c.currentHp > 0))
+        {
+            isBattleOver = true; // 웨이브가 끝났으므로 전투 종료 신호를 보내 GameLoop가 다음 단계를 진행하도록 함
         }
     }
      //일단 주석처리. 근데 이건 멀티플레이에서나 필요한거 아닌가? 나중에 멀티플레이 배틀씬 만들고 생각해보자. 이 Scene에서는 사용하지 않을 것지만 기억하는 용도로 남겨둠

@@ -34,18 +34,24 @@ public class BattleUIManager : MonoBehaviour
 
     }
 
-    public void InitializeUI(Player player, int maxSlots)
+    public void InitializePlayerUI(Player player, int maxSlots)
     {
-        // 1. 등록 슬롯 UI 생성
         InitializeRegisteredSlots(maxSlots);
-
-        // 2. 덱 구성 및 초기 드로우
-        if (player.deck.Count == 0)
+        
+        // ★★★ masterDeck 구성 ★★★
+        if (player.masterDeck.Count == 0)
         {
-            for (int i = 0; i < 10; i++) player.deck.Add(gameManager.GetCardData("c001"));
-            for (int i = 0; i < 10; i++) player.deck.Add(gameManager.GetCardData("c002"));
-            player.ShuffleDeck();
+            // 예시: c001 카드 10장, c002 카드 10장을 원본 덱으로 구성
+            for (int i = 0; i < 10; i++) player.masterDeck.Add(gameManager.GetCardData("c001"));
+            for (int i = 0; i < 10; i++) player.masterDeck.Add(gameManager.GetCardData("c002"));
         }
+
+        // ★★★ 플레이용 덱을 원본 덱으로 초기화 ★★★
+        player.deck.Clear();
+        player.deck.AddRange(player.masterDeck);
+        
+        // 덱 섞고 초기 8장 드로우
+        player.ShuffleDeck();
         DrawNewCards(4);
     }
 

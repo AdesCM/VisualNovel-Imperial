@@ -1,0 +1,2 @@
+﻿StageID,Chapter,Stage,StageName,AIPatternID,Wave1_Enemies,Wave2_Enemies,Wave3_Enemies,Wave4_Enemies,Wave5_Enemies,Wave6_Enemies,Wave7_Enemies,Wave8_Enemies,Wave9_Enemies
+debug_stage_01,0,0,디버그 스테이지,,mage_fire;mage_fire,,,,,,,,

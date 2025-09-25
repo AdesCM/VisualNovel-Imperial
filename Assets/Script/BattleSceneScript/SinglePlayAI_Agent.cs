@@ -27,7 +27,7 @@ public class SinglePlayAI_Agent : MonoBehaviour, IPlayerAgent
         BuildDynamicSkillPool();
     }
 
-    private void BuildDynamicSkillPool()
+    public void BuildDynamicSkillPool()
     {
         dynamicSkillPool.Clear();
         // 현재 제어 중인 플레이어(Player2)의 모든 캐릭터를 순회
@@ -48,34 +48,42 @@ public class SinglePlayAI_Agent : MonoBehaviour, IPlayerAgent
         if (GameConstants.DEBUG_MODE) Debug.Log($"{controlledPlayer.playerName}(AI)가 행동을 결정 중입니다...");
         controlledPlayer.registeredSlots.Clear();
 
-        // ★★★ 1. 현재 턴 번호를 가져옴 ★★★
-        int currentTurn = gameManager.GetCurrentTurn();
+        bool hasExecutedPattern = false;
 
-        // ★★★ 2. 현재 턴에 예정된 행동이 있는지 패턴에서 검색 ★★★
-        var actionsForThisTurn = currentPattern.scheduledActions.Where(a => a.turnNumber == currentTurn).ToList();
-
-        if (actionsForThisTurn.Count > 0)
+        // ★★★ 1. AI 패턴이 있는지(null이 아닌지) 먼저 확인 ★★★
+        if (currentPattern != null)
         {
-            // ★★★ 3. 예정된 행동이 있다면, 그대로 실행 ★★★
-            if (GameConstants.DEBUG_MODE) Debug.Log($"[AI] {currentTurn}턴 패턴 행동 실행!");
-            foreach (var action in actionsForThisTurn)
+            int currentTurn = gameManager.GetCurrentTurn();
+            var actionsForThisTurn = currentPattern.scheduledActions.Where(a => a.turnNumber == currentTurn).ToList();
+
+            if (actionsForThisTurn.Count > 0)
             {
-                // 지정된 캐릭터를 시전자로 설정 (여기서는 첫 번째 캐릭터로 고정)
-                Character caster = controlledPlayer.characters[0];
-                controlledPlayer.registeredSlots.Add(new RegisteredCardSlot
+                // ★★★ 2. 패턴이 있고, 현재 턴에 할 일이 있다면 -> 패턴대로 행동 ★★★
+                if (GameConstants.DEBUG_MODE) Debug.Log($"[AI] {currentTurn}턴 패턴 행동 실행!");
+                foreach (var action in actionsForThisTurn)
                 {
-                    cardSO = action.cardToUse,
-                    user = caster
-                });
-                // (향후 targetSlotIndex도 활용 가능)
+                    // 첫 번째 캐릭터를 시전자로 임시 지정
+                    Character caster = controlledPlayer.characters.FirstOrDefault();
+                    if (caster != null)
+                    {
+                        controlledPlayer.registeredSlots.Add(new RegisteredCardSlot
+                        {
+                            cardSO = action.cardToUse,
+                            user = caster
+                        });
+                    }
+                }
+                hasExecutedPattern = true; // 패턴을 실행했다고 표시
             }
         }
-        else
+
+        // ★★★ 3. 패턴이 없거나(null), 현재 턴에 할 일이 없다면 -> 무작위로 행동 ★★★
+        if (!hasExecutedPattern)
         {
-            // ★★★ 4. 예정된 행동이 없다면, 기존의 무작위 방식으로 행동 (Fallback) ★★★
-            if (GameConstants.DEBUG_MODE) Debug.Log($"[AI] {currentTurn}턴에 예정된 행동 없음. 무작위 행동 실행.");
+            if (GameConstants.DEBUG_MODE) Debug.Log($"[AI] 지정된 패턴 없음. 무작위 행동 실행.");
             var shuffledPool = dynamicSkillPool.OrderBy(x => Random.value).ToList();
-            for (int i = 0; i < 2 && i < shuffledPool.Count; i++) // 예: 2장 등록
+            // 예시: 2장 등록
+            for (int i = 0; i < 4 && i < shuffledPool.Count; i++)
             {
                 var chosenSkillInfo = shuffledPool[i];
                 controlledPlayer.registeredSlots.Add(new RegisteredCardSlot
