@@ -9,15 +9,7 @@ public class SinglePlayAI_Agent : MonoBehaviour, IPlayerAgent
 
     private AIPatternSO currentPattern; 
 
-    //시전자와 스킬을 함께 묶어주는 내부 구조체 사용
-    private class InnateSkillInfo
-    {
-        public CardDataSO Card { get; set; }
-        public Character Caster { get; set; }
-    }
-    
-    // Inspector에서 받던 List 대신, 내부에서 동적으로 생성할 스킬 풀
-    private List<InnateSkillInfo> dynamicSkillPool = new List<InnateSkillInfo>();
+     private List<RuntimeCard> dynamicSkillPool = new List<RuntimeCard>();
 
     public void Setup(Player player, GameManager gm, AIPatternSO pattern)
     {
@@ -37,7 +29,7 @@ public class SinglePlayAI_Agent : MonoBehaviour, IPlayerAgent
             foreach (var skill in character.blueprint.innateSkills)
             {
                 // 스킬과 그 스킬의 주인(시전자)을 짝지어 스킬 풀에 추가
-                dynamicSkillPool.Add(new InnateSkillInfo { Card = skill, Caster = character });
+                dynamicSkillPool.Add(new RuntimeCard { CardSO = skill, Caster = character });
             }
         }
         if (GameConstants.DEBUG_MODE) Debug.Log($"{controlledPlayer.playerName}의 스킬 풀 구성 완료. 총 {dynamicSkillPool.Count}개의 스킬 보유.");
@@ -46,7 +38,7 @@ public class SinglePlayAI_Agent : MonoBehaviour, IPlayerAgent
     public void PrepareTurn()
     {
         if (GameConstants.DEBUG_MODE) Debug.Log($"{controlledPlayer.playerName}(AI)가 행동을 결정 중입니다...");
-        controlledPlayer.registeredSlots.Clear();
+        controlledPlayer.registeredCards.Clear();
 
         bool hasExecutedPattern = false;
 
@@ -59,18 +51,13 @@ public class SinglePlayAI_Agent : MonoBehaviour, IPlayerAgent
             if (actionsForThisTurn.Count > 0)
             {
                 // ★★★ 2. 패턴이 있고, 현재 턴에 할 일이 있다면 -> 패턴대로 행동 ★★★
-                if (GameConstants.DEBUG_MODE) Debug.Log($"[AI] {currentTurn}턴 패턴 행동 실행!");
                 foreach (var action in actionsForThisTurn)
                 {
-                    // 첫 번째 캐릭터를 시전자로 임시 지정
                     Character caster = controlledPlayer.characters.FirstOrDefault();
                     if (caster != null)
                     {
-                        controlledPlayer.registeredSlots.Add(new RegisteredCardSlot
-                        {
-                            cardSO = action.cardToUse,
-                            user = caster
-                        });
+                        // ★★★ InnateSkillInfo 대신 RuntimeCard 객체를 생성하여 추가 ★★★
+                        controlledPlayer.registeredCards.Add(new RuntimeCard { CardSO = action.cardToUse, Caster = caster });
                     }
                 }
                 hasExecutedPattern = true; // 패턴을 실행했다고 표시
@@ -86,11 +73,7 @@ public class SinglePlayAI_Agent : MonoBehaviour, IPlayerAgent
             for (int i = 0; i < 4 && i < shuffledPool.Count; i++)
             {
                 var chosenSkillInfo = shuffledPool[i];
-                controlledPlayer.registeredSlots.Add(new RegisteredCardSlot
-                {
-                    cardSO = chosenSkillInfo.Card,
-                    user = chosenSkillInfo.Caster 
-                });
+                controlledPlayer.registeredCards.Add(shuffledPool[i]);
             }
         }
     }

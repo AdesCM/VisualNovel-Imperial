@@ -21,6 +21,8 @@ public class CardStateData
     public string stateName;
     public string attackDice;
     public AttackType attackType;
+    
+    public Sprite cardArt;
     public List<EffectData> effects;
 }
 
@@ -28,7 +30,6 @@ public class CardStateData
 public class CardDataSO : ScriptableObject
 {
     public string cardId;
-    public Sprite cardArt;
     public int speed;
     
     public CardStateData awakenedState;

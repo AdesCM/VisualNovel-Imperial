@@ -1,0 +1,4 @@
+﻿CardID,CardName,Speed,Awakened_Name,Awakened_Dice,Awakened_Type,Awakened_Effects,Awakened_ArtPath,Revelation_Name,Revelation_Dice,Revelation_Type,Revelation_Effects,Revelation_ArtPath,Encroachment_Name,Encroachment_Dice,Encroachment_Type,Encroachment_Effects,Encroachment_ArtPath,Corrosion_Name,Corrosion_Dice,Corrosion_Type,Corrosion_Effects,Corrosion_ArtPath
+debug_skill001,디버깅_에너미_공격,2,할퀴기,2+1d5,Slash,,,들이박기,7-1d5,Slash,,,,,,,,,,,,
+debug_skill002,디버깅_나이트_공격,4,베기,3+1d5,Slash,,,찢기,8-1d5,Slash,,,천상의 검,1+3d5,Slash,,,저주의 칼날,21-2d6,Slash,,
+debug_skill003,디버깅_메이지_공격,4,화염구,5+1d3,Blunt,,,지옥해골,9-2d4,Blunt,,,천상의 메아리,3+2d9,Blunt,,,지옥화염구,20-4d3,Blunt,,

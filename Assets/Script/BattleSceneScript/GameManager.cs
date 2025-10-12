@@ -30,7 +30,7 @@ public class GameManager : MonoBehaviour
     private int currentWaveIndex = 0;
 
     private struct CardEffectExecution { public CardEffect effect; public Player ownerPlayer; public Player opponentPlayer; public Character ownerUser; public Character opponentUser; }
-    private struct EffectToSort { public CardEffectExecution execution; public int speed; public int attackPower; public System.Guid randomId; }
+    private struct EffectToSort { public CardEffectExecution execution; public int speed; public int attackPower; public System.Guid randomId; public RuntimeCard ownerCard; }
 
     private int currentTurn = 0; // 현재 턴 번호 기록
 
@@ -113,7 +113,76 @@ public class GameManager : MonoBehaviour
             StartNewTurn();
         }
     }
+    IEnumerator InitialSetup()
+    {
+        currentStageData = StageManager.Instance.GetCurrentStageData();
+        if (currentStageData == null)
+        {
+            Debug.LogError("현재 스테이지 정보를 찾을 수 없습니다!");
+            yield break;
+        }
 
+        // --- 1. Player 1 (User) 캐릭터 생성 및 설정 ---
+        player1.agent?.Setup(player1, this, null);
+        player1.characters.Clear();
+        // (향후 이 부분도 PlayerDataManager에서 어떤 캐릭터를 선택했는지 받아와야 함)
+        CharacterSO knightSO = characterDatabase["briram_spear"];
+        Character knight = new Character(knightSO);
+        EquipmentSO longsword = equipmentDatabase["longsword_01"];
+        knight.EquipItem(longsword);
+        player1.characters.Add(knight);
+        
+        // --- 2. Player 2 (AI) 설정 ---
+        player2.characters.Clear();
+        foreach (var enemyId in currentStageData.Waves[0])
+        {
+            CharacterSO enemySO = characterDatabase[enemyId];
+            player2.characters.Add(new Character(enemySO));
+        }
+        AIPatternSO aiPattern = StageManager.Instance.GetAIPattern(currentStageData.AIPatternID);
+        player2.agent?.Setup(player2, this, aiPattern);
+        
+        // ★★★ 3. PlayerDataManager를 확인하여 덱 구성 ★★★
+        player1.masterDeck.Clear();
+        // '여행 가방'이 있고, 그 안에 덱 정보가 들어있다면
+        if (PlayerDataManager.Instance != null && PlayerDataManager.Instance.PlayerDeck.Count > 0)
+        {
+            if (GameConstants.DEBUG_MODE) Debug.Log("PlayerDataManager로부터 덱을 구성합니다.");
+            foreach (var deckInfo in PlayerDataManager.Instance.PlayerDeck)
+            {
+                CardDataSO cardSO = GetCardData(deckInfo.CardID);
+                Character caster = player1.characters.FirstOrDefault(c => c.blueprint.characterId == deckInfo.CasterID);
+                if (cardSO != null && caster != null)
+                {
+                    player1.masterDeck.Add(new RuntimeCard { CardSO = cardSO, Caster = caster });
+                }
+            }
+        }
+        else // '여행 가방'이 없거나 비어있다면 (디버깅용 대체 로직)
+        {
+            if (GameConstants.DEBUG_MODE) Debug.LogWarning("PlayerDataManager 덱 정보 없음. 캐릭터 고유 스킬로 기본 덱을 구성합니다.");
+            foreach (var character in player1.characters)
+            {
+                foreach (var skillSO in character.GetAvailableSkills())
+                {
+                    player1.masterDeck.Add(new RuntimeCard { CardSO = skillSO, Caster = character });
+                }
+            }
+        }
+        
+        // ★★★ 4. UI 초기화 명령 (BattleUIManager는 이제 덱 구성을 하지 않음) ★★★
+        if (uiManager != null)
+        {
+            int initialMaxSlots = player1.baseSlots + player1.bonusSlots;
+            uiManager.InitializePlayerUI(player1, initialMaxSlots);
+        }
+        
+        // --- 5. 첫 턴 준비 시작 ---
+        StartNewTurn();
+        yield return null;
+    }
+
+     /* 20251012 덱 로드 로직 변경으로 인한 주석처리
      IEnumerator InitialSetup()
     {
         currentStageData = StageManager.Instance.GetCurrentStageData();
@@ -122,6 +191,8 @@ public class GameManager : MonoBehaviour
             Debug.LogError("현재 스테이지 정보를 찾을 수 없습니다!");
             yield break;
         }
+
+
 
         // --- Player 1 (User) 설정 ---
         player1.agent?.Setup(player1, this, null);
@@ -132,7 +203,6 @@ public class GameManager : MonoBehaviour
         player1.characters.Add(knight);
         
         // --- Player 2 (AI) 설정 ---
-        // ★★★ 로직 순서 오류 수정: 캐릭터를 먼저 추가한 후, Agent를 설정합니다 ★★★
         player2.characters.Clear();
         foreach (var enemyId in currentStageData.Waves[0])
         {
@@ -141,6 +211,33 @@ public class GameManager : MonoBehaviour
         }
         AIPatternSO aiPattern = StageManager.Instance.GetAIPattern(currentStageData.AIPatternID);
         player2.agent?.Setup(player2, this, aiPattern); // 이제 Skill Pool이 정상적으로 구성됩니다.
+
+
+        player1.masterDeck.Clear();
+        // '여행 가방'이 있고, 그 안에 덱 정보가 들어있다면
+        if (PlayerDataManager.Instance != null && PlayerDataManager.Instance.PlayerDeckCardIDs.Count > 0)
+        {
+            if (GameConstants.DEBUG_MODE) Debug.Log("PlayerDataManager로부터 덱을 구성합니다.");
+            foreach (var cardId in PlayerDataManager.Instance.PlayerDeckCardIDs)
+            {
+                CardDataSO cardSO = GetCardData(cardId);
+                if (cardSO != null)
+                {
+                    // 덱의 모든 카드는 플레이어의 첫 번째 캐릭터가 시전한다고 가정
+                    player1.masterDeck.Add(new RuntimeCard { CardSO = cardSO, Caster = player1.characters[0] });
+                }
+            }
+        }
+        else // '여행 가방'이 없거나 비어있다면 (디버깅용 대체 로직)
+        {
+            if (GameConstants.DEBUG_MODE) Debug.LogWarning("PlayerDataManager 덱 정보 없음. 캐릭터 고유 스킬로 기본 덱을 구성합니다.");
+            foreach (var skillSO in knight.GetAvailableSkills())
+            {
+                player1.masterDeck.Add(new RuntimeCard { CardSO = skillSO, Caster = knight });
+            }
+        }
+
+
 
         if (uiManager != null)
         {
@@ -151,6 +248,7 @@ public class GameManager : MonoBehaviour
         // --- 첫 턴 준비 ---
         StartNewTurn();
     }
+    */
 
     void StartNewTurn()
     {
@@ -158,8 +256,8 @@ public class GameManager : MonoBehaviour
         if (GameConstants.DEBUG_MODE) Debug.Log("========== 새로운 턴 시작 ==========");
 
         // 1. 이전 턴의 등록된 카드 모두 삭제
-        player1.registeredSlots.Clear();
-        player2.registeredSlots.Clear();
+        player1.registeredCards.Clear();
+        player2.registeredCards.Clear();
 
         isBattleOver = false;
 
@@ -265,21 +363,21 @@ public class GameManager : MonoBehaviour
         {
             if (GameConstants.DEBUG_MODE) Debug.Log($"\n<<<<< 라운드 {i + 1} 시작 >>>>>");
             
-            bool p1HasSlot = i < player1.registeredSlots.Count;
-            bool p2HasSlot = i < player2.registeredSlots.Count;
-            RegisteredCardSlot p1Slot = p1HasSlot ? player1.registeredSlots[i] : new RegisteredCardSlot { cardSO = dummyCard, user = null };
-            RegisteredCardSlot p2Slot = p2HasSlot ? player2.registeredSlots[i] : new RegisteredCardSlot { cardSO = dummyCard, user = null };
+            bool p1HasCard = i < player1.registeredCards.Count;
+            bool p2HasCard = i < player2.registeredCards.Count;
+            RuntimeCard p1Card = p1HasCard ? player1.registeredCards[i] : new RuntimeCard { CardSO = dummyCard, Caster = null };
+            RuntimeCard p2Card = p2HasCard ? player2.registeredCards[i] : new RuntimeCard { CardSO = dummyCard, Caster = null };
             
             GameObject p1CardObject = Instantiate(cardPrefab, p1BattlePos.position, Quaternion.identity);
             CardView p1CardView = p1CardObject.GetComponent<CardView>();
-            p1CardView.Setup(p1Slot.cardSO, GetStateData(p1Slot));
+            p1CardView.Setup(p1Card.CardSO, GetStateData(p1Card));
             
             GameObject p2CardObject = Instantiate(cardPrefab, p2BattlePos.position, Quaternion.identity);
             CardView p2CardView = p2CardObject.GetComponent<CardView>();
-            p2CardView.Setup(p2Slot.cardSO, GetStateData(p2Slot));
+            p2CardView.Setup(p2Card.CardSO, GetStateData(p2Card));
 
             yield return new WaitForSeconds(1f);
-            yield return StartCoroutine(ProcessSingleRound(p1Slot, p2Slot, p1CardView, p2CardView, i)); 
+            yield return StartCoroutine(ProcessSingleRound(p1Card, p2Card, p1CardView, p2CardView, i)); 
             
             p1CardView.DestroyCard();
             p2CardView.DestroyCard();
@@ -305,81 +403,116 @@ public class GameManager : MonoBehaviour
 
     void DetermineAllSlotStates(Player player)
     {
-        foreach (var slot in player.registeredSlots) DetermineSlotState(slot);
+        foreach (var card in player.registeredCards) DetermineSlotState(card);
     }
     
-    void DetermineSlotState(RegisteredCardSlot slot)
+    void DetermineSlotState(RuntimeCard card)
     {
-        if (slot.user == null) { slot.state = SlotState.Awakened; return; }
-        slot.state = (slot.user.sanity >= 0) ? SlotState.Awakened : SlotState.Revelation;
-        if (slot.state == SlotState.Awakened && slot.user.sanity == 15 && slot.cardSO.HasEncroachmentState) slot.state = SlotState.Encroachment;
-        else if (slot.state == SlotState.Revelation && slot.user.sanity == -15 && slot.cardSO.HasCorrosionState) slot.state = SlotState.Corrosion;
-        if (GameConstants.DEBUG_MODE) Debug.Log($"{slot.user.characterName}의 카드 '{GetStateData(slot).stateName}' 최종 상태: {slot.state}");
+        if (card.Caster == null) { card.State = SlotState.Awakened; return; }
+        card.State = (card.Caster.sanity >= 0) ? SlotState.Awakened : SlotState.Revelation;
+        if (card.State == SlotState.Awakened && card.Caster.sanity == 15 && card.CardSO.HasEncroachmentState) card.State = SlotState.Encroachment;
+        else if (card.State == SlotState.Revelation && card.Caster.sanity == -15 && card.CardSO.HasCorrosionState) card.State = SlotState.Corrosion;
+        if (GameConstants.DEBUG_MODE) Debug.Log($"{card.Caster.characterName}의 카드 '{GetStateData(card).stateName}' 최종 상태: {card.State}");
     }
 
-    IEnumerator ProcessSingleRound(RegisteredCardSlot slot1, RegisteredCardSlot slot2, CardView view1, CardView view2, int roundIndex)
+    IEnumerator ProcessSingleRound(RuntimeCard card1, RuntimeCard card2, CardView view1, CardView view2, int roundIndex)
     {
         if (GameConstants.DEBUG_MODE) Debug.Log("--- [페이즈] 전투 전 ---");
-        yield return StartCoroutine(ProcessRoundPhase(GamePhase.PreCombat, slot1, slot2));
+        yield return StartCoroutine(ProcessRoundPhase(GamePhase.PreCombat, card1, card2));
         if (CheckForGameOver()) yield break;
 
-        if (slot1.user != null && slot2.user != null)
+        RuntimeCard winnerCard = null, loserCard = null;
+        Player winnerPlayer = null;
+        CardView winnerView = null, loserView = null;
+        int winnerIndex = -1;
+
+        // ★★★ 수정된 부분: 우위 경쟁 및 일방 공격 로직 통합 ★★★
+        if (card1.Caster != null && card2.Caster != null)
         {
+            // 1. 양쪽 모두 카드를 낸 경우: 기존의 우위 경쟁 진행
             if (GameConstants.DEBUG_MODE) Debug.Log("--- [전투] 우위 경쟁 ---");
-            int p1InitiativeRoll = DiceRollParser.Parse(GetStateData(slot1).attackDice).Roll();
-            int p2InitiativeRoll = DiceRollParser.Parse(GetStateData(slot2).attackDice).Roll();
-            if (GameConstants.DEBUG_MODE) Debug.Log($"{slot1.user.characterName} 주사위: {p1InitiativeRoll}  vs  {slot2.user.characterName} 주사위: {p2InitiativeRoll}");
-            
-            RegisteredCardSlot winnerSlot = null, loserSlot = null;
-            Player winnerPlayer = null, loserPlayer = null;
-            CardView winnerView = null, loserView = null;
-            int winnerIndex = -1, loserIndex = -1;
+            int p1InitiativeRoll = DiceRollParser.Parse(GetStateData(card1).attackDice).Roll();
+            int p2InitiativeRoll = DiceRollParser.Parse(GetStateData(card2).attackDice).Roll();
+            if (GameConstants.DEBUG_MODE) Debug.Log($"{card1.Caster.characterName} 주사위: {p1InitiativeRoll}  vs  {card2.Caster.characterName} 주사위: {p2InitiativeRoll}");
 
-            if (p1InitiativeRoll > p2InitiativeRoll) { winnerSlot = slot1; loserSlot = slot2; winnerPlayer = player1; loserPlayer = player2; winnerView = view1; loserView = view2; winnerIndex = roundIndex; loserIndex = roundIndex; }
-            else if (p2InitiativeRoll > p1InitiativeRoll) { winnerSlot = slot2; loserSlot = slot1; winnerPlayer = player2; loserPlayer = player1; winnerView = view2; loserView = view1; winnerIndex = roundIndex; loserIndex = roundIndex; }
-
-            if (winnerSlot != null)
-            {
-                if (GameConstants.DEBUG_MODE) Debug.Log($"[전투] 우위 경쟁 승자: {winnerSlot.user.characterName}");
-                if (GameConstants.DEBUG_MODE) Debug.Log($"--- {winnerSlot.user.characterName}의 '{GetStateData(winnerSlot).stateName}' 공격 ---");
-
-                Character attacker = winnerSlot.user;
-                Character defender = loserSlot.user;
-                int finalDamage = CalculateFinalDamage(winnerSlot, loserSlot, winnerPlayer, winnerIndex);
-                defender.TakeDamage(finalDamage);
-
-                attacker.ChangeSanity(2);
-                defender.ChangeSanity(-3);
-
-                if (GameConstants.DEBUG_MODE)
-                {
-                    string attackerStatus = $"공격자: {attacker.characterName} | HP: {attacker.currentHp}/{attacker.GetFinalMaxHealth()} | 정신력: {attacker.sanity} | 장비: {GetEquipmentList(attacker)} | 카드: {GetStateData(winnerSlot).stateName}";
-                    string defenderStatus = $"방어자: {defender.characterName} | HP: {defender.currentHp}/{defender.GetFinalMaxHealth()} | 정신력: {defender.sanity} | 장비: {GetEquipmentList(defender)} | 카드: {GetStateData(loserSlot).stateName}";
-                    Debug.Log($"[전투 결과]\n{attackerStatus}\n{defenderStatus}");
-                }
-
-                if (defender.currentHp <= 0) { HandleCharacterDeath(winnerSlot, loserSlot); }
-
-                winnerView.PlayAttackAnimation(loserView.transform.position, winnerView.transform.position);
-                yield return new WaitForSeconds(0.5f);
-                loserView.PlayDamageEffect();
-                if (CheckForGameOver()) yield break;
-            }
+            if (p1InitiativeRoll > p2InitiativeRoll) { winnerCard = card1; loserCard = card2; winnerPlayer = player1; winnerView = view1; loserView = view2; winnerIndex = roundIndex; }
+            else if (p2InitiativeRoll > p1InitiativeRoll) { winnerCard = card2; loserCard = card1; winnerPlayer = player2; winnerView = view2; loserView = view1; winnerIndex = roundIndex; }
             else { if (GameConstants.DEBUG_MODE) Debug.Log("[전투] 우위 경쟁 무승부! 전투가 무효 처리됩니다."); }
         }
+        else if (card1.Caster != null && card2.Caster == null)
+        {
+            // 2. 플레이어1만 카드를 낸 경우: 일방 공격
+            if (GameConstants.DEBUG_MODE) Debug.Log($"--- [전투] {player1.playerName}의 일방 공격 ---");
+            winnerCard = card1;
+            winnerPlayer = player1;
+            winnerView = view1;
+            winnerIndex = roundIndex;
+            // 패자는 특정 캐릭터가 아니므로, 랜덤한 생존 적을 대상으로 지정
+            var aliveEnemies = player2.characters.Where(c => c.currentHp > 0).ToList();
+            if (aliveEnemies.Count > 0)
+            {
+                Character randomTarget = aliveEnemies[Random.Range(0, aliveEnemies.Count)];
+                loserCard = new RuntimeCard { Caster = randomTarget }; // 피해를 받을 대상만 임시로 지정
+                loserView = view2; // 시각 효과를 위해 View는 그대로 사용
+            }
+        }
+        else if (card1.Caster == null && card2.Caster != null)
+        {
+            // 3. 플레이어2만 카드를 낸 경우: 일방 공격
+            if (GameConstants.DEBUG_MODE) Debug.Log($"--- [전투] {player2.playerName}의 일방 공격 ---");
+            winnerCard = card2;
+            winnerPlayer = player2;
+            winnerView = view2;
+            winnerIndex = roundIndex;
+            var aliveEnemies = player1.characters.Where(c => c.currentHp > 0).ToList();
+            if (aliveEnemies.Count > 0)
+            {
+                Character randomTarget = aliveEnemies[Random.Range(0, aliveEnemies.Count)];
+                loserCard = new RuntimeCard { Caster = randomTarget };
+                loserView = view1;
+            }
+        }
+
+        // ★★★ 공통 피해 처리 로직 ★★★
+        if (winnerCard != null && loserCard != null && loserCard.Caster != null)
+        {
+            if (GameConstants.DEBUG_MODE) Debug.Log($"[전투] 우위 경쟁 승자: {winnerCard.Caster.characterName}");
+            if (GameConstants.DEBUG_MODE) Debug.Log($"--- {winnerCard.Caster.characterName}의 '{GetStateData(winnerCard).stateName}' 공격 ---");
+
+            Character attacker = winnerCard.Caster;
+            Character defender = loserCard.Caster;
+            int finalDamage = CalculateFinalDamage(winnerCard, loserCard, winnerPlayer, winnerIndex);
+            defender.TakeDamage(finalDamage);
+            attacker.ChangeSanity(2);
+            defender.ChangeSanity(-3);
+
+            if (GameConstants.DEBUG_MODE)
+            {
+                string attackerStatus = $"공격자: {attacker.characterName} | HP: {attacker.currentHp}/{attacker.GetFinalMaxHealth()} | 정신력: {attacker.sanity} | 카드: {GetStateData(winnerCard).stateName}";
+                string defenderStatus = $"방어자: {defender.characterName} | HP: {defender.currentHp}/{defender.GetFinalMaxHealth()} | 정신력: {defender.sanity}";
+                Debug.Log($"[전투 결과]\n{attackerStatus}\n{defenderStatus}");
+            }
+
+            if (defender.currentHp <= 0) { HandleCharacterDeath(winnerCard, loserCard); }
+
+            winnerView.PlayAttackAnimation(loserView.transform.position, winnerView.transform.position);
+            yield return new WaitForSeconds(0.5f);
+            if (loserView != null) loserView.PlayDamageEffect();
+            if (CheckForGameOver()) yield break;
+        }
+
         yield return new WaitForSeconds(1f);
         if (GameConstants.DEBUG_MODE) Debug.Log("--- [페이즈] 전투 후 ---");
-        yield return StartCoroutine(ProcessRoundPhase(GamePhase.PostCombat, slot1, slot2));
+        yield return StartCoroutine(ProcessRoundPhase(GamePhase.PostCombat, card1, card2));
     }
-
-    private int CalculateFinalDamage(RegisteredCardSlot attackerSlot, RegisteredCardSlot defenderSlot, Player attackerPlayer, int slotIndex)
+//if (GameConstants.DEBUG_MODE) Debug.Log($"[전투] 우위 경쟁 승자: {winnerCard.Caster.characterName}");
+    private int CalculateFinalDamage(RuntimeCard attackerCard, RuntimeCard defenderCard, Player attackerPlayer, int slotIndex)
     {
-        Character attacker = attackerSlot.user;
-        Character defender = defenderSlot.user;
-        CardStateData attackerCardState = GetStateData(attackerSlot);
+        Character attacker = attackerCard.Caster;
+        Character defender = defenderCard.Caster;
+        CardStateData attackerCardState = GetStateData(attackerCard);
 
         float damageReduction = GameConstants.MAX_DAMAGE_REDUCTION_RATE * (defender.GetFinalDefense() / (float)(defender.GetFinalDefense() + GameConstants.DEFENSE_CONSTANT));
-        
         DiceRoll diceRoll = DiceRollParser.Parse(attackerCardState.attackDice);
         if (attackerPlayer.slotDiceCountBuffs.ContainsKey(slotIndex)) { diceRoll.numberOfDice += attackerPlayer.slotDiceCountBuffs[slotIndex]; }
         if (attackerPlayer.slotDiceMaxBuffs.ContainsKey(slotIndex)) { diceRoll.sidesOfDice += attackerPlayer.slotDiceMaxBuffs[slotIndex]; }
@@ -396,15 +529,14 @@ public class GameManager : MonoBehaviour
             if (isCritical) Debug.Log($"[데미지 계산] {attacker.characterName}의 치명타 발생!");
             Debug.Log($"[데미지 계산] 기본 공격 피해: {attackDamage:F1}, 피해 감소율: {damageReduction * 100:F1}%, 최종 피해: {finalDamage:F1}");
         }
-
         return Mathf.Max(1, Mathf.FloorToInt(finalDamage));
     }
 
-    IEnumerator ProcessRoundPhase(GamePhase phase, RegisteredCardSlot slot1, RegisteredCardSlot slot2)
+    IEnumerator ProcessRoundPhase(GamePhase phase, RuntimeCard card1, RuntimeCard card2)
     {
         var effectsToProcess = new List<EffectToSort>();
-        CollectEffectsFromCard(effectsToProcess, phase, player1, player2, slot1, slot2);
-        CollectEffectsFromCard(effectsToProcess, phase, player2, player1, slot2, slot1);
+        CollectEffectsFromCard(effectsToProcess, phase, player1, player2, card1, card2);
+        CollectEffectsFromCard(effectsToProcess, phase, player2, player1, card2, card1);
         SortEffects(effectsToProcess);
         foreach (var sortedEffect in effectsToProcess) { effectQueue.Enqueue(sortedEffect.execution); }
         yield return StartCoroutine(ProcessEffectQueue());
@@ -413,16 +545,16 @@ public class GameManager : MonoBehaviour
     IEnumerator ProcessGlobalPhase(GamePhase phase)
     {
         var effectsToProcess = new List<EffectToSort>();
-        foreach (var slot in player1.registeredSlots) if (slot != null) CollectEffectsFromCard(effectsToProcess, phase, player1, player2, slot, null);
-        foreach (var slot in player2.registeredSlots) if (slot != null) CollectEffectsFromCard(effectsToProcess, phase, player2, player1, slot, null);
+        foreach (var card in player1.registeredCards) if (card != null) CollectEffectsFromCard(effectsToProcess, phase, player1, player2, card, null);
+        foreach (var card in player2.registeredCards) if (card != null) CollectEffectsFromCard(effectsToProcess, phase, player2, player1, card, null);
         SortEffects(effectsToProcess);
         foreach (var sortedEffect in effectsToProcess) { effectQueue.Enqueue(sortedEffect.execution); }
         yield return StartCoroutine(ProcessEffectQueue());
     }
 
-    void CollectEffectsFromCard(List<EffectToSort> list, GamePhase phase, Player owner, Player opponent, RegisteredCardSlot ownerSlot, RegisteredCardSlot opponentSlot)
+    void CollectEffectsFromCard(List<EffectToSort> list, GamePhase phase, Player owner, Player opponent, RuntimeCard ownerCard, RuntimeCard opponentCard)
     {
-        CardStateData currentStateData = GetStateData(ownerSlot);
+        CardStateData currentStateData = GetStateData(ownerCard);
         if (currentStateData == null || currentStateData.effects == null) return;
         foreach (var effectData in currentStateData.effects)
         {
@@ -440,9 +572,9 @@ public class GameManager : MonoBehaviour
             {
                 list.Add(new EffectToSort
                 {
-                    execution = new CardEffectExecution { effect = tempEffect, ownerPlayer = owner, opponentPlayer = opponent, ownerUser = ownerSlot.user, opponentUser = opponentSlot?.user },
-                    speed = ownerSlot.cardSO.speed,
-                    attackPower = ownerSlot.user.GetFinalAttackPower(), 
+                    execution = new CardEffectExecution { effect = tempEffect, ownerPlayer = owner, opponentPlayer = opponent, ownerUser = ownerCard.Caster, opponentUser = opponentCard?.Caster },
+                    speed = ownerCard.CardSO.speed,
+                    attackPower = ownerCard.Caster.GetFinalAttackPower(), 
                     randomId = System.Guid.NewGuid()
                 });
             }
@@ -461,15 +593,27 @@ public class GameManager : MonoBehaviour
         });
     }
     
-    CardStateData GetStateData(RegisteredCardSlot slot)
+    public CardStateData GetStateData(RuntimeCard card)
     {
-        if (slot == null || slot.cardSO == null) return null;
-        switch (slot.state)
+        if (card == null || card.CardSO == null) return null;
+        switch (card.State)
         {
-            case SlotState.Encroachment: return slot.cardSO.encroachmentState;
-            case SlotState.Corrosion: return slot.cardSO.corrosionState;
-            case SlotState.Revelation: return slot.cardSO.revelationState;
-            default: return slot.cardSO.awakenedState;
+            case SlotState.Encroachment: return card.CardSO.encroachmentState;
+            case SlotState.Corrosion: return card.CardSO.corrosionState;
+            case SlotState.Revelation: return card.CardSO.revelationState;
+            default: return card.CardSO.awakenedState;
+        }
+    }
+
+    public CardStateData GetStateData(SlotState state, CardDataSO cardSO)
+    {
+        if (cardSO == null) return null;
+        switch (state)
+        {
+            case SlotState.Encroachment: return cardSO.encroachmentState;
+            case SlotState.Corrosion: return cardSO.corrosionState;
+            case SlotState.Revelation: return cardSO.revelationState;
+            default: return cardSO.awakenedState;
         }
     }
     
@@ -510,10 +654,10 @@ public class GameManager : MonoBehaviour
         return false;
     }
     
-    void HandleCharacterDeath(RegisteredCardSlot killerSlot, RegisteredCardSlot deadSlot)
+    void HandleCharacterDeath(RuntimeCard killerCard, RuntimeCard deadCard)
     {
-        Character killer = killerSlot.user;
-        Character deadCharacter = deadSlot.user;
+        Character killer = killerCard.Caster;
+        Character deadCharacter = deadCard.Caster;
         if (GameConstants.DEBUG_MODE) Debug.Log($"{deadCharacter.characterName}이(가) 처치되었습니다!");
         killer.ChangeSanity(3);
         Player deadCharacterTeam = player1.characters.Contains(deadCharacter) ? player1 : player2;
@@ -523,7 +667,7 @@ public class GameManager : MonoBehaviour
         }
         if (!player2.characters.Any(c => c.currentHp > 0))
         {
-            isBattleOver = true; // 웨이브가 끝났으므로 전투 종료 신호를 보내 GameLoop가 다음 단계를 진행하도록 함
+            isBattleOver = true;
         }
     }
      //일단 주석처리. 근데 이건 멀티플레이에서나 필요한거 아닌가? 나중에 멀티플레이 배틀씬 만들고 생각해보자. 이 Scene에서는 사용하지 않을 것지만 기억하는 용도로 남겨둠

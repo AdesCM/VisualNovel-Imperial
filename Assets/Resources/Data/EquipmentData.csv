@@ -1,0 +1,2 @@
+﻿EquipmentID,EquipmentName,Description,IconPath,EquipmentType,GrantedSkillID,StatModifiers
+longsword_01,롱소드,"""강철로 만들어진 견고한 검""",,Weapon,,AttackPower:5

@@ -34,30 +34,3 @@ public abstract class EquipmentSO : ScriptableObject
     // 이 장비가 제공하는 스탯 보너스 목록
     public List<StatModifier> statModifiers;
 }
-
-// --- 각 장비 종류별 클래스 ---
-
-[CreateAssetMenu(fileName = "New Weapon", menuName = "Card Game/Equipment/Weapon")]
-public class WeaponSO : EquipmentSO
-{
-    // 무기는 특정 캐릭터 전용일 수 있음 (향후 CharacterSO와 연결 가능)
-    // public CharacterSO requiredCharacter; 
-}
-
-[CreateAssetMenu(fileName = "New Armor", menuName = "Card Game/Equipment/Armor")]
-public class ArmorSO : EquipmentSO
-{
-    // public CharacterSO requiredCharacter;
-}
-
-[CreateAssetMenu(fileName = "New Accessory", menuName = "Card Game/Equipment/Accessory")]
-public class AccessorySO : EquipmentSO
-{
-    // 액세서리는 공용이므로 특정 캐릭터 요구사항 없음
-}
-
-[CreateAssetMenu(fileName = "New Artifact", menuName = "Card Game/Equipment/Artifact")]
-public class ArtifactSO : EquipmentSO
-{
-    // public CharacterSO requiredCharacter;
-}

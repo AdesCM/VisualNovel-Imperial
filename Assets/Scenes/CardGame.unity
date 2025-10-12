@@ -555,10 +555,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerName: 
-  masterDeck: []
-  deck: []
-  hand: []
-  discardPile: []
   baseSlots: 4
   bonusSlots: 0
 --- !u!4 &757264530
@@ -598,6 +594,7 @@ GameObject:
   m_Component:
   - component: {fileID: 842418524}
   - component: {fileID: 842418523}
+  - component: {fileID: 842418525}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -640,6 +637,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &842418525
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 842418522}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b2744a7fb9519a418886d06ddbd5cec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  debugDeck: []
+  useInspectorDeck: 1
+  savedDeckFileName: debug_deck.json
 --- !u!1 &902272437
 GameObject:
   m_ObjectHideFlags: 0
@@ -1316,10 +1328,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerName: 
-  masterDeck: []
-  deck: []
-  hand: []
-  discardPile: []
   baseSlots: 4
   bonusSlots: 0
 --- !u!4 &1395255218
@@ -2063,6 +2071,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2001289989}
   - component: {fileID: 2001289990}
+  - component: {fileID: 2001289991}
   m_Layer: 0
   m_Name: Test
   m_TagString: Untagged
@@ -2097,6 +2106,66 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aac1094ab36a65346bcc55715f8bfee3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &2001289991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2001289988}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b2744a7fb9519a418886d06ddbd5cec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  debugDeck: []
+  useInspectorDeck: 1
+  savedDeckFileName: debug_deck.json
+--- !u!1 &2004527939
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2004527941}
+  - component: {fileID: 2004527940}
+  m_Layer: 0
+  m_Name: PlayerDataManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2004527940
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2004527939}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2525d044c1d745d44a3691a431518d98, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  PlayerDeck: []
+--- !u!4 &2004527941
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2004527939}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 572.146, y: 104.66817, z: 1.7399292}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -2113,3 +2182,4 @@ SceneRoots:
   - {fileID: 185441007}
   - {fileID: 1525977150}
   - {fileID: 1819837314}
+  - {fileID: 2004527941}

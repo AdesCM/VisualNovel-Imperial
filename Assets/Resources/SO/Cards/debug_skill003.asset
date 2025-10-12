@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf72825348c4b1d47aa35fb201be0dd4, type: 3}
+  m_Name: "\uB514\uBC84\uAE45_\uBA54\uC774\uC9C0_\uACF5\uACA9"
+  m_EditorClassIdentifier: 
+  cardId: debug_skill003
+  speed: 4
+  awakenedState:
+    stateName: "\uD654\uC5FC\uAD6C"
+    attackDice: 5+1d3
+    attackType: 2
+    cardArt: {fileID: 0}
+    effects: []
+  revelationState:
+    stateName: "\uC9C0\uC625\uD574\uACE8"
+    attackDice: 9-2d4
+    attackType: 2
+    cardArt: {fileID: 0}
+    effects: []
+  encroachmentState:
+    stateName: "\uCC9C\uC0C1\uC758 \uBA54\uC544\uB9AC"
+    attackDice: 3+2d9
+    attackType: 2
+    cardArt: {fileID: 0}
+    effects: []
+  corrosionState:
+    stateName: "\uC9C0\uC625\uD654\uC5FC\uAD6C"
+    attackDice: 20-4d3
+    attackType: 2
+    cardArt: {fileID: 0}
+    effects: []

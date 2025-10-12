@@ -10,17 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 324e804ad52e7844fb2790174f827753, type: 3}
-  m_Name: briram_spear
+  m_Name: "\uBE0C\uB9AC\uB78C"
   m_EditorClassIdentifier: 
   characterId: briram_spear
-  characterName: "\uC5C4\uB2E4\uD604"
+  characterName: 
   description: 
   baseMaxHealth: 120
-  baseAttackPower: 13
+  baseAttackPower: 15
   baseDefense: 10
   baseCritRate: 0.1
   baseCritMultiplier: 1.5
   baseResistanceSlash: 1
   baseResistancePierce: 1
   baseResistanceBlunt: 1
-  innateSkills: []
+  innateSkills:
+  - {fileID: 11400000, guid: 490cd950ce1d18149bcbfbed46bf8a1a, type: 2}
+  - {fileID: 11400000, guid: 490cd950ce1d18149bcbfbed46bf8a1a, type: 2}

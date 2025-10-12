@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 324e804ad52e7844fb2790174f827753, type: 3}
-  m_Name: mage_fire
+  m_Name: "\uD654\uC5FC\uC758 \uB9C8\uBC95\uC0AC"
   m_EditorClassIdentifier: 
   characterId: mage_fire
-  characterName: "\uC5C4\uC900\uC2DD"
+  characterName: 
   description: 
   baseMaxHealth: 100
   baseAttackPower: 15
@@ -24,6 +24,7 @@ MonoBehaviour:
   baseResistancePierce: 1
   baseResistanceBlunt: 1
   innateSkills:
-  - {fileID: 11400000, guid: c0a82cd7425b77845b1281fe1de9c1ce, type: 2}
-  - {fileID: 11400000, guid: c0a82cd7425b77845b1281fe1de9c1ce, type: 2}
-  - {fileID: 11400000, guid: c0a82cd7425b77845b1281fe1de9c1ce, type: 2}
+  - {fileID: 11400000, guid: 86ca501d43a498b4c8ea9e8537cb9a25, type: 2}
+  - {fileID: 11400000, guid: 86ca501d43a498b4c8ea9e8537cb9a25, type: 2}
+  - {fileID: 11400000, guid: 86ca501d43a498b4c8ea9e8537cb9a25, type: 2}
+  - {fileID: 11400000, guid: 86ca501d43a498b4c8ea9e8537cb9a25, type: 2}
