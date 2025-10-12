@@ -651,6 +651,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   debugDeck: []
   useInspectorDeck: 1
+  autoLoadFromJSON: 0
   savedDeckFileName: debug_deck.json
 --- !u!1 &902272437
 GameObject:
@@ -2119,7 +2120,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugDeck: []
-  useInspectorDeck: 1
+  useInspectorDeck: 0
+  autoLoadFromJSON: 1
   savedDeckFileName: debug_deck.json
 --- !u!1 &2004527939
 GameObject:

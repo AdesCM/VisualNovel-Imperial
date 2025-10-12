@@ -1,6 +1,5 @@
-기본 디버깅용 덱 로드 완료
 의 스킬 풀 구성 완료. 총 8개의 스킬 보유.
-PlayerDataManager로부터 덱을 구성합니다.
+덱이 소진되어 원본 덱으로 새로 채우고 섞습니다.
 가 4장의 카드를 뽑습니다. 현재 핸드: 4장
 ========== 새로운 턴 시작 ==========
 (AI)가 행동을 결정 중입니다...
@@ -10,5 +9,35 @@ PlayerDataManager로부터 덱을 구성합니다.
 의 카드 '화염구' 최종 상태: Awakened
 의 카드 '화염구' 최종 상태: Awakened
 덱이 소진되어 원본 덱으로 새로 채우고 섞습니다.
+덱이 소진되어 원본 덱으로 새로 채우고 섞습니다.
 가 4장의 카드를 뽑습니다. 현재 핸드: 8장
 기본 디버깅용 덱 로드 완료
+JSON 파일 경로: C:/Users/mirmi/AppData/LocalLow/DefaultCompany/InterStellaProject\debug_deck.json
+파일 존재 여부: True
+JSON 파일 내용 길이: 428 문자
+JSON 파일 내용: {
+    "PlayerDeck": [
+        {
+            "CardID": "debug_skill002",
+            "CasterID": "briram_spear"
+        },
+        {
+            "CardID": "debug_skill002",
+            "CasterID": "briram_spear"
+        },
+        {
+            "CardID": "debug_skill002",
+            "CasterID": "briram_spear"
+        },
+        {
+            "CardID": "debug_skill002",
+            "CasterID": "briram_spear"
+        }
+    ]
+}
+JSON에서 덱을 불러왔습니다: 4장의 카드
+  카드 1: debug_skill002 (시전자: briram_spear)
+  카드 2: debug_skill002 (시전자: briram_spear)
+  카드 3: debug_skill002 (시전자: briram_spear)
+  카드 4: debug_skill002 (시전자: briram_spear)
+JSON에서 덱을 자동으로 불러왔습니다.

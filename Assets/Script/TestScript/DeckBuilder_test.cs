@@ -8,6 +8,7 @@ public class DeckBuilder_Test : MonoBehaviour
     [Header("디버깅용 덱 설정")]
     [SerializeField] private List<DeckCardInfo> debugDeck = new List<DeckCardInfo>();
     [SerializeField] private bool useInspectorDeck = true;
+    [SerializeField] private bool autoLoadFromJSON = true;
     [SerializeField] private string savedDeckFileName = "debug_deck.json";
     
     void Start()
@@ -39,6 +40,19 @@ public class DeckBuilder_Test : MonoBehaviour
             // Inspector에서 설정된 덱 사용
             PlayerDataManager.Instance.PlayerDeck.AddRange(debugDeck);
             Debug.Log($"Inspector에서 설정된 디버깅용 덱 로드: {debugDeck.Count}장");
+        }
+        else if (autoLoadFromJSON)
+        {
+            // JSON에서 자동으로 덱 불러오기
+            if (TryLoadDeckFromJSON())
+            {
+                Debug.Log("JSON에서 덱을 자동으로 불러왔습니다.");
+            }
+            else
+            {
+                Debug.LogWarning("JSON 파일을 찾을 수 없어 기본 덱을 사용합니다.");
+                LoadDefaultDebugDeck();
+            }
         }
         else
         {
@@ -93,21 +107,89 @@ public class DeckBuilder_Test : MonoBehaviour
     [ContextMenu("JSON에서 덱 불러오기")]
     public void LoadDeckFromJSON()
     {
+        if (TryLoadDeckFromJSON())
+        {
+            Debug.Log("JSON에서 덱을 불러왔습니다.");
+        }
+        else
+        {
+            Debug.LogWarning("JSON에서 덱을 불러오는데 실패했습니다.");
+        }
+    }
+    
+    bool TryLoadDeckFromJSON()
+    {
         string filePath = Path.Combine(Application.persistentDataPath, savedDeckFileName);
+        
+        Debug.Log($"JSON 파일 경로: {filePath}");
+        Debug.Log($"파일 존재 여부: {File.Exists(filePath)}");
         
         if (!File.Exists(filePath))
         {
-            Debug.LogWarning($"저장된 덱 파일을 찾을 수 없습니다: {filePath}");
-            return;
+            Debug.LogError($"JSON 파일을 찾을 수 없습니다: {filePath}");
+            return false;
         }
         
-        string json = File.ReadAllText(filePath);
-        PlayerSaveData loadedData = JsonUtility.FromJson<PlayerSaveData>(json);
+        try
+        {
+            string json = File.ReadAllText(filePath);
+            Debug.Log($"JSON 파일 내용 길이: {json.Length} 문자");
+            Debug.Log($"JSON 파일 내용: {json}");
+            
+            if (string.IsNullOrEmpty(json))
+            {
+                Debug.LogError("JSON 파일이 비어있습니다.");
+                return false;
+            }
+            
+            PlayerSaveData loadedData = JsonUtility.FromJson<PlayerSaveData>(json);
+            
+            if (loadedData == null)
+            {
+                Debug.LogError("JSON 파싱 결과가 null입니다.");
+                return false;
+            }
+            
+            if (loadedData.PlayerDeck == null)
+            {
+                Debug.LogError("로드된 데이터의 PlayerDeck이 null입니다.");
+                return false;
+            }
+            
+            if (loadedData.PlayerDeck.Count == 0)
+            {
+                Debug.LogWarning("로드된 덱에 카드가 없습니다.");
+                return false;
+            }
+            
+            if (PlayerDataManager.Instance != null)
+            {
+                PlayerDataManager.Instance.PlayerDeck.Clear();
+                PlayerDataManager.Instance.PlayerDeck.AddRange(loadedData.PlayerDeck);
+                Debug.Log($"JSON에서 덱을 불러왔습니다: {loadedData.PlayerDeck.Count}장의 카드");
+                
+                // 각 카드 정보 출력
+                for (int i = 0; i < loadedData.PlayerDeck.Count; i++)
+                {
+                    var card = loadedData.PlayerDeck[i];
+                    Debug.Log($"  카드 {i + 1}: {card.CardID} (시전자: {card.CasterID})");
+                }
+                
+                return true;
+            }
+            else
+            {
+                Debug.LogError("PlayerDataManager.Instance가 null입니다.");
+                return false;
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"JSON 덱 로딩 중 오류 발생: {e.Message}");
+            Debug.LogError($"스택 트레이스: {e.StackTrace}");
+        }
         
-        PlayerDataManager.Instance.PlayerDeck.Clear();
-        PlayerDataManager.Instance.PlayerDeck.AddRange(loadedData.PlayerDeck);
-        
-        Debug.Log($"JSON에서 덱을 불러왔습니다: {loadedData.PlayerDeck.Count}장의 카드");
+        return false;
     }
 
     // (UI 버튼 등에 연결하여 호출할 함수)

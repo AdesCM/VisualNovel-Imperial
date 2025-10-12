@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
 
-// ★★★ 추가: 카드 ID와 시전자 ID를 묶어주는 새로운 데이터 구조 ★★★
+// 카드 ID와 시전자 ID를 묶어주는 데이터 구조
 [System.Serializable]
 public class DeckCardInfo
 {
@@ -13,7 +13,7 @@ public class DeckCardInfo
 [System.Serializable]
 public class PlayerSaveData
 {
-    // ★★★ 저장 데이터도 DeckCardInfo 리스트로 변경 ★★★
+    //저장 데이터도 DeckCardInfo 리스트로 변경
     public List<DeckCardInfo> PlayerDeck = new List<DeckCardInfo>();
 }
 
@@ -21,7 +21,7 @@ public class PlayerDataManager : MonoBehaviour
 {
     public static PlayerDataManager Instance;
 
-    // ★★★ 덱 정보 리스트의 타입을 DeckCardInfo로 변경 ★★★
+    //덱 정보 리스트의 타입을 DeckCardInfo로 변경
     public List<DeckCardInfo> PlayerDeck = new List<DeckCardInfo>();
     
     private string saveFilePath;
